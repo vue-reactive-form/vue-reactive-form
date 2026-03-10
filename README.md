@@ -1,19 +1,19 @@
 # vue-reactive-form
 
-Lightweight, type-safe form state management and validation for Vue 3. Leverages Vue's reactivity system to provide a seamless, flexible way to manage form state and validation — without depending on strings to link inputs to the form.
+Lightweight, type-safe form state management and validation for Vue 3. Leverages Vue's reactivity system to provide a seamless, flexible way to manage form state and validation - without depending on strings to link inputs to the form.
 
-🚀 **Get started in minutes** — no boilerplate, no learning curve. Just reactive forms that work.
+🚀 **Get started in minutes** - no boilerplate, no learning curve. Just reactive forms that work.
 
 Check out the [live demo](https://vue-reactive-form.github.io/vue-reactive-form/) for a hands-on example.
 
 **Killer Features**:
 
-- **Lightweight** — Minimal footprint, focused on form state and validation without unnecessary bloat
-- **Type-safe** — Built with TypeScript, ensuring your form values and validation rules are fully typed. Navigate nested form state with full autocompletion
-- **Standard Schema validation** — Compatible with [Standard Schema](https://github.com/standard-schema/standard-schema), making it work out of the box with Yup, Zod, Valibot, and others
-- **Headless & UI agnostic** — Core form logic and state management without enforcing any UI components or styles. Works with any UI library or custom design system
-- **Reactive validation schema** — Pass a `ref` as your validation schema and swap validation rules dynamically at runtime
-- **Proxy-based tree navigation** — Access any field's control at any depth via dot-path notation (`form.user.profile.name.$control`), no string paths needed
+- **Lightweight** - Minimal footprint, focused on form state and validation without unnecessary bloat
+- **Type-safe** - Built with TypeScript, ensuring your form values and validation rules are fully typed. Navigate nested form state with full autocompletion
+- **Standard Schema validation** - Compatible with [Standard Schema](https://github.com/standard-schema/standard-schema), making it work out of the box with Yup, Zod, Valibot, and others
+- **Headless & UI agnostic** - Core form logic and state management without enforcing any UI components or styles. Works with any UI library or custom design system
+- **Reactive validation schema** - Pass a `ref` as your validation schema and swap validation rules dynamically at runtime
+- **Proxy-based tree navigation** - Access any field's control at any depth via dot-path notation (`form.user.profile.name.$control`), no string paths needed
 
 ## Table of Contents
 
@@ -128,7 +128,7 @@ form.name.$control.isValid.value // true when no validation errors
 form.name.$control.errorMessages.value // string[] of error messages
 ```
 
-The `$control` is available at **every level** of the form tree — from the root, through nested objects, down to individual array elements.
+The `$control` is available at **every level** of the form tree - from the root, through nested objects, down to individual array elements.
 
 ## Form State
 
@@ -324,7 +324,7 @@ await validate() // ✅ { name: "" }
 schemaRef.value = strictSchema
 
 // Now validation fails
-await validate() // ❌ undefined — form.name.$control.errorMessages.value === ["Name is required"]
+await validate() // ❌ undefined - form.name.$control.errorMessages.value === ["Name is required"]
 ```
 
 You can even start with `undefined` and set a schema later:
@@ -395,7 +395,7 @@ const onSubmit = handleSubmit({
 Bind it to a form's submit event:
 
 ```html
-<form @submit.prevent="onSubmit">
+<form @submit="onSubmit">
   <!-- ... -->
 </form>
 ```
@@ -520,14 +520,14 @@ A node in the form tree. The concrete type depends on the value type:
 All form nodes expose a `$control` property. Object and array nodes also allow further navigation into their children.
 
 ```ts
-// PrimitiveFormNode — leaf node
+// PrimitiveFormNode - leaf node
 form.name.$control
 
-// ObjectFormNode — navigate deeper
+// ObjectFormNode - navigate deeper
 form.user.$control // control for the entire user object
 form.user.name.$control // control for user.name
 
-// ArrayFormNode — index or iterate
+// ArrayFormNode - index or iterate
 form.tags.$control // control for the entire array (with add/remove/moveItem)
 form.tags[0].$control // control for the first element
 for (const tag of form.tags) {
@@ -641,7 +641,7 @@ form.name.$control.dirty.value // false
 
 #### `InputControl.updateDefaultState(newDefault?)`
 
-Updates the default value for the field. Use with caution — changing the default affects dirty checking.
+Updates the default value for the field. Use with caution - changing the default affects dirty checking.
 
 ```ts
 form.name.$control.updateDefaultState("New Default")
@@ -713,8 +713,8 @@ form.tags.$control.moveItem(0, 2)
 ```ts
 const { form } = useForm({ name: "John", age: 30 })
 
-form.name.$control.state.value // string — fully typed
-form.age.$control.state.value // number — fully typed
+form.name.$control.state.value // string | undefined - fully typed
+form.age.$control.state.value // number | undefined - fully typed
 ```
 
 For forms where the initial state may be partial, provide a type parameter:
@@ -754,7 +754,7 @@ const { form, handleSubmit } = useForm<FormInput, FormOutput>(
 
 const onSubmit = handleSubmit({
   onSuccess: (state) => {
-    // state is typed as FormOutput — name and email are guaranteed strings
+    // state is typed as FormOutput - name and email are guaranteed strings
     console.log(state.name, state.email)
   }
 })
