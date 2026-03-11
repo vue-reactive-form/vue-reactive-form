@@ -424,6 +424,99 @@ describe("useForm", () => {
       expect(onSuccess).toHaveBeenCalledWith({ foo: "bar" })
       expect(onError).not.toHaveBeenCalled()
     })
+
+    it("should mark all accessed fields as touched after submit", async () => {
+      const schema = yup.object({
+        name: yup.string().required(),
+        age: yup.number().required()
+      })
+      const { form, handleSubmit } = useForm(
+        { name: "John", age: 30 },
+        { validationSchema: schema }
+      )
+
+      // Access fields through the controls tree
+      expect(form.name.$control.touched.value).toBe(false)
+      expect(form.age.$control.touched.value).toBe(false)
+
+      const submit = handleSubmit({ onSuccess: vi.fn() })
+      await submit()
+
+      expect(form.name.$control.touched.value).toBe(true)
+      expect(form.age.$control.touched.value).toBe(true)
+    })
+
+    it("should mark fields as touched even when validation fails", async () => {
+      const schema = yup.object({
+        name: yup.string().required("Name is required"),
+        email: yup.string().email().required("Email is required")
+      })
+      const { form, handleSubmit } = useForm(
+        { name: "", email: "" },
+        { validationSchema: schema }
+      )
+
+      // Access fields
+      expect(form.name.$control.touched.value).toBe(false)
+      expect(form.email.$control.touched.value).toBe(false)
+
+      const onError = vi.fn()
+      const submit = handleSubmit({ onError })
+      await submit()
+
+      expect(onError).toHaveBeenCalled()
+      expect(form.name.$control.touched.value).toBe(true)
+      expect(form.email.$control.touched.value).toBe(true)
+    })
+
+    it("should not mark fields that were never accessed as touched", async () => {
+      const schema = yup.object({
+        name: yup.string().required(),
+        secret: yup.string()
+      })
+      const { form, handleSubmit } = useForm(
+        { name: "John", secret: "hidden" },
+        { validationSchema: schema }
+      )
+
+      // Only access 'name', never access 'secret'
+      expect(form.name.$control.touched.value).toBe(false)
+
+      const submit = handleSubmit({ onSuccess: vi.fn() })
+      await submit()
+
+      expect(form.name.$control.touched.value).toBe(true)
+      // 'secret' was never accessed through the controls tree, so it won't be in the cache
+      expect(form.secret.$control.touched.value).toBe(false)
+    })
+
+    it("should mark deeply nested accessed fields as touched after submit", async () => {
+      const schema = yup.object({
+        user: yup.object({
+          profile: yup.object({
+            name: yup.string().required(),
+            email: yup.string().email().required()
+          })
+        })
+      })
+      const { form, handleSubmit } = useForm(
+        { user: { profile: { name: "John", email: "john@example.com" } } },
+        { validationSchema: schema }
+      )
+
+      // Access deeply nested fields
+      expect(form.user.profile.name.$control.touched.value).toBe(false)
+      expect(form.user.profile.email.$control.touched.value).toBe(false)
+
+      const submit = handleSubmit({ onSuccess: vi.fn() })
+      await submit()
+
+      expect(form.user.profile.name.$control.touched.value).toBe(true)
+      expect(form.user.profile.email.$control.touched.value).toBe(true)
+      // Intermediate nodes should also be touched
+      expect(form.user.$control.touched.value).toBe(true)
+      expect(form.user.profile.$control.touched.value).toBe(true)
+    })
   })
 
   describe("validateOn option", () => {

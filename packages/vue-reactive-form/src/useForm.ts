@@ -50,6 +50,8 @@ export const useForm = <TState, TValidatedState = TState>(
     return async (event?: Event) => {
       event?.preventDefault()
 
+      formContext.setAllFieldsAsTouched()
+
       const validationResult = await validate()
 
       if (validationResult) {

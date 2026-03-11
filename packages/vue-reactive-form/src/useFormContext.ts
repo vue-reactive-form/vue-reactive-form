@@ -66,6 +66,12 @@ export const useFormContext = <TState>(
     return touchedFields.value?.has(getPathAsString(path))
   }
 
+  const setAllFieldsAsTouched = () => {
+    for (const key of controlsCache.keys()) {
+      touchedFields.value.add(key)
+    }
+  }
+
   return {
     state,
     defaultFormState,
@@ -74,6 +80,7 @@ export const useFormContext = <TState>(
     setFieldState,
     setFieldErrors,
     setFieldAsTouched,
+    setAllFieldsAsTouched,
     getFieldState,
     getFieldErrors,
     isFieldTouched
