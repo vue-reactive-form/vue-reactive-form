@@ -34,33 +34,33 @@ const onSubmit = handleSubmit({
 
           <LabeledInput
             label="Name"
-            v-model="form.name.$control.state.value"
-            :errors="form.name.$control.errorMessages.value"
+            v-model="form.name.$control.state"
+            :errors="form.name.$control.errorMessages"
             type="text"
           />
 
           <LabeledInput
             label="Description"
-            v-model="form.description.$control.state.value"
-            :errors="form.description.$control.errorMessages.value"
+            v-model="form.description.$control.state"
+            :errors="form.description.$control.errorMessages"
             type="text"
           />
 
           <LabeledInput
             label="Budget"
-            v-model="form.budget.$control.state.value"
-            :errors="form.budget.$control.errorMessages.value"
+            v-model="form.budget.$control.state"
+            :errors="form.budget.$control.errorMessages"
             type="number"
           />
 
           <div class="checkbox-wrapper">
             <label class="checkbox-label">
               <input
-                :checked="form.isPublic.$control.state.value"
+                :checked="form.isPublic.$control.state"
                 type="checkbox"
                 @change="
                   (e) =>
-                    (form.isPublic.$control.state.value = (
+                    (form.isPublic.$control.state = (
                       e.target as any
                     ).checked)
                 "
@@ -68,11 +68,11 @@ const onSubmit = handleSubmit({
               <span>Is public</span>
             </label>
             <div
-              v-if="form.isPublic.$control.errorMessages.value.length"
+              v-if="form.isPublic.$control.errorMessages.length"
               class="error-container"
             >
               <div
-                v-for="error in form.isPublic.$control.errorMessages.value"
+                v-for="error in form.isPublic.$control.errorMessages"
                 :key="error"
                 class="error-message"
               >
@@ -83,42 +83,42 @@ const onSubmit = handleSubmit({
 
           <LabeledInput
             label="Client name"
-            v-model="form.client.name.$control.state.value"
-            :errors="form.client.name.$control.errorMessages.value"
+            v-model="form.client.name.$control.state"
+            :errors="form.client.name.$control.errorMessages"
             type="text"
           />
 
           <LabeledInput
             label="Client street address"
-            v-model="form.client.address.street.$control.state.value"
-            :errors="form.client.address.street.$control.errorMessages.value"
+            v-model="form.client.address.street.$control.state"
+            :errors="form.client.address.street.$control.errorMessages"
             type="text"
           />
 
           <LabeledInput
             label="Client city"
-            v-model="form.client.address.city.$control.state.value"
-            :errors="form.client.address.city.$control.errorMessages.value"
+            v-model="form.client.address.city.$control.state"
+            :errors="form.client.address.city.$control.errorMessages"
             type="text"
           />
 
           <ArrayInput
             label="Team members"
             :node="form.teamMembers"
-            :errors="form.teamMembers.$control.errorMessages.value"
+            :errors="form.teamMembers.$control.errorMessages"
           >
             <template #="{ node }">
               <div class="grid-col-2">
                 <LabeledInput
                   label="Name"
-                  v-model="node.name.$control.state.value"
-                  :errors="node.name.$control.errorMessages.value"
+                  v-model="node.name.$control.state"
+                  :errors="node.name.$control.errorMessages"
                   type="text"
                 />
                 <LabeledInput
                   label="Hourly rate"
-                  v-model="node.hourlyRate.$control.state.value"
-                  :errors="node.hourlyRate.$control.errorMessages.value"
+                  v-model="node.hourlyRate.$control.state"
+                  :errors="node.hourlyRate.$control.errorMessages"
                   type="number"
                 />
               </div>
@@ -128,14 +128,14 @@ const onSubmit = handleSubmit({
           <ArrayInput
             label="Tags"
             :node="form.tags"
-            :errors="form.tags.$control.errorMessages.value"
+            :errors="form.tags.$control.errorMessages"
           >
             <template #="{ node }">
               <div class="grid-full">
                 <LabeledInput
                   label="Name"
-                  v-model="node.$control.state.value"
-                  :errors="node.$control.errorMessages.value"
+                  v-model="node.$control.state"
+                  :errors="node.$control.errorMessages"
                   type="text"
                 />
               </div>
@@ -149,7 +149,7 @@ const onSubmit = handleSubmit({
       <div class="card inspector-card">
         <div class="inspector-section">
           <h2 class="section-title">Form state inspector</h2>
-          <pre>{{ form.$control.state.value }}</pre>
+          <pre>{{ form.$control.state }}</pre>
         </div>
 
         <div class="inspector-section">
