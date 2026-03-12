@@ -402,6 +402,18 @@ Bind it to a form's submit event:
 
 The handler automatically calls `event.preventDefault()` when an `Event` argument is passed. When no validation schema is provided, `onSuccess` is called with the current form state.
 
+**Touched on submit:** When `handleSubmit` is called, all fields that have been accessed through the form tree are automatically marked as `touched` — before validation runs.
+
+```ts
+form.name.$control.touched.value // false
+form.email.$control.touched.value // false
+
+await onSubmit()
+
+form.name.$control.touched.value // true
+form.email.$control.touched.value // true
+```
+
 ## API
 
 ### `useForm(defaultState, options?)`
@@ -596,6 +608,8 @@ form.name.$control.touched.value // false
 form.name.$control.setAsTouched()
 form.name.$control.touched.value // true
 ```
+
+> **Note:** When using `handleSubmit`, all accessed fields are automatically marked as touched before validation. This means you can safely gate error visibility behind `touched` — errors will appear for all fields after the first submit attempt.
 
 #### `InputControl.isValid`
 

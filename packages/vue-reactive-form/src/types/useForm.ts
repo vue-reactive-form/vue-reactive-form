@@ -73,6 +73,10 @@ export type FormContext<TState> = {
    * @returns True if the field has been touched, false otherwise.
    */
   isFieldTouched: (path: PropertyPath) => boolean
+  /**
+   * Sets all fields that have been accessed (cached) as touched.
+   */
+  setAllFieldsAsTouched: () => void
 }
 
 export type ValidateOn = "submit" | "change"
