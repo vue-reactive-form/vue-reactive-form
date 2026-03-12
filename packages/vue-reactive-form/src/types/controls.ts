@@ -4,6 +4,11 @@ import type { PartialOrPrimitive } from "./utils"
  * Control of a node inside a form, with the give type.
  *
  * Allows access to the state management for the node, and metadata describing its status.
+ *
+ * @warning Do not destructure the `$control` object (e.g., `const { state } = form.field.$control`). 
+ * Since the properties are implemented as getters, destructuring will break reactivity and 
+ * capture static values at the time of destructuring. Always access properties directly 
+ * via the `$control` reference (e.g., `form.field.$control.state`).
  */
 export type InputControl<T> = {
   state: PartialOrPrimitive<T> | undefined

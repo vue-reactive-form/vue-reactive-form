@@ -102,12 +102,12 @@ const onSubmit = handleSubmit({
     <div>
       <label>Name</label>
       <!-- 3. Bind to form controls -->
-      <input v-model="form.name.$control.state.value" type="text" />
+      <input v-model="form.name.$control.state" type="text" />
     </div>
 
     <div>
       <label>Email</label>
-      <input v-model="form.email.$control.state.value" type="email" />
+      <input v-model="form.email.$control.state" type="email" />
     </div>
 
     <button type="submit">Submit</button>
@@ -120,15 +120,17 @@ const onSubmit = handleSubmit({
 Every node in the form tree exposes a `$control` object, which is an [`InputControl`](#inputcontrol) (or [`ArrayInputControl`](#arrayinputcontrol) for arrays). This is your gateway to the field's reactive state and metadata:
 
 ```ts
-form.name.$control.state.value // Current value (read/write)
-form.name.$control.defaultState.value // Default value (read-only)
-form.name.$control.dirty.value // true if value differs from default
-form.name.$control.touched.value // true after setAsTouched() is called
-form.name.$control.isValid.value // true when no validation errors
-form.name.$control.errorMessages.value // string[] of error messages
+form.name.$control.state // Current value (read/write)
+form.name.$control.defaultState // Default value (read-only)
+form.name.$control.dirty // true if value differs from default
+form.name.$control.touched // true after setAsTouched() is called
+form.name.$control.isValid // true when no validation errors
+form.name.$control.errorMessages // string[] of error messages
 ```
 
 The `$control` is available at **every level** of the form tree - from the root, through nested objects, down to individual array elements.
+
+> **⚠️ Important Reactivity Rule:** Do not destructure the `$control` object (e.g., `const { state } = form.name.$control`). Because `$control` properties are implemented using Vue's reactive getters under the hood, destructuring will break reactivity and capture static values at the moment of destructuring. Always access properties directly on the `$control` reference.
 
 ## Form State
 
@@ -139,7 +141,7 @@ The root state doesn't have to be an object. It can be a primitive value:
 ```ts
 const { form } = useForm("Hello World")
 
-form.$control.state.value // "Hello World"
+form.$control.state // "Hello World"
 ```
 
 ### Object State
@@ -149,12 +151,12 @@ Object state lets you navigate to each property's control:
 ```ts
 const { form } = useForm({ name: "John", age: 30 })
 
-form.name.$control.state.value // "John"
-form.age.$control.state.value // 30
+form.name.$control.state // "John"
+form.age.$control.state // 30
 
 // Update a field
-form.name.$control.state.value = "Jane"
-form.name.$control.dirty.value // true
+form.name.$control.state = "Jane"
+form.name.$control.dirty // true
 ```
 
 ### Nested Objects
@@ -171,18 +173,18 @@ const { form } = useForm({
   }
 })
 
-form.user.profile.name.$control.state.value // "John"
-form.user.profile.email.$control.state.value // "john@example.com"
+form.user.profile.name.$control.state // "John"
+form.user.profile.email.$control.state // "john@example.com"
 ```
 
 Each intermediate node also has a `$control`:
 
 ```ts
 // Access the entire profile object
-form.user.profile.$control.state.value // { name: "John", email: "john@example.com" }
+form.user.profile.$control.state // { name: "John", email: "john@example.com" }
 
 // Replace the entire profile at once
-form.user.profile.$control.state.value = {
+form.user.profile.$control.state = {
   name: "Jane",
   email: "jane@example.com"
 }
@@ -198,11 +200,10 @@ const { form } = useForm({
 })
 
 // Access the whole array
-form.tags.$control.state.value // ["javascript", "vue", "typescript"]
+form.tags.$control.state
 
 // Access individual elements
-form.tags[0].$control.state.value // "javascript"
-form.tags[1].$control.state.value // "vue"
+form.tags[0].$control.state
 
 // Array operations
 form.tags.$control.add("react") // Append an item
@@ -220,8 +221,8 @@ const { form } = useForm({
   ]
 })
 
-form.users[0].name.$control.state.value // "John"
-form.users[1].age.$control.state.value // 25
+form.users[0].name.$control.state // "John"
+form.users[1].age.$control.state // 25
 ```
 
 ### Iterating Over Arrays
@@ -231,7 +232,7 @@ Array form nodes are iterable, so you can loop over them in templates or scripts
 ```vue
 <template>
   <div v-for="(member, index) in form.teamMembers" :key="index">
-    <input v-model="member.name.$control.state.value" />
+    <input v-model="member.name.$control.state" />
     <button @click="form.teamMembers.$control.remove(index)">Remove</button>
   </div>
   <button @click="form.teamMembers.$control.add()">Add Member</button>
@@ -242,7 +243,7 @@ Or in script:
 
 ```ts
 for (const item of form.items) {
-  console.log(item.$control.state.value)
+  console.log(item.$control.state)
 }
 ```
 
@@ -277,17 +278,17 @@ const onSubmit = handleSubmit({
   <form @submit.prevent="onSubmit">
     <div>
       <label>Name</label>
-      <input v-model="form.name.$control.state.value" type="text" />
-      <span v-if="!form.name.$control.isValid.value">
-        {{ form.name.$control.errorMessages.value.join(", ") }}
+      <input v-model="form.name.$control.state" type="text" />
+      <span v-if="!form.name.$control.isValid">
+        {{ form.name.$control.errorMessages.join(", ") }}
       </span>
     </div>
 
     <div>
       <label>Email</label>
-      <input v-model="form.email.$control.state.value" type="email" />
-      <span v-if="!form.email.$control.isValid.value">
-        {{ form.email.$control.errorMessages.value.join(", ") }}
+      <input v-model="form.email.$control.state" type="email" />
+      <span v-if="!form.email.$control.isValid">
+        {{ form.email.$control.errorMessages.join(", ") }}
       </span>
     </div>
 
@@ -324,7 +325,7 @@ await validate() // ✅ { name: "" }
 schemaRef.value = strictSchema
 
 // Now validation fails
-await validate() // ❌ undefined - form.name.$control.errorMessages.value === ["Name is required"]
+await validate() // ❌ undefined - form.name.$control.errorMessages === ["Name is required"]
 ```
 
 You can even start with `undefined` and set a schema later:
@@ -356,19 +357,19 @@ const { form, validate } = useForm(
 
 await validate()
 
-form.name.$control.isValid.value // false
-form.name.$control.errorMessages.value // ["Name is required"]
+form.name.$control.isValid // false
+form.name.$control.errorMessages // ["Name is required"]
 
-form.age.$control.isValid.value // false
-form.age.$control.errorMessages.value // ["Age must be positive"]
+form.age.$control.isValid // false
+form.age.$control.errorMessages // ["Age must be positive"]
 ```
 
 > **Note:** When you update a field's state, its validation errors are automatically cleared. Errors won't persist until the next validation is performed.
 
 ```ts
-form.name.$control.state.value = "John"
-form.name.$control.isValid.value // true (errors cleared)
-form.name.$control.errorMessages.value // [] (cleared on change)
+form.name.$control.state = "John"
+form.name.$control.isValid // true (errors cleared)
+form.name.$control.errorMessages // [] (cleared on change)
 ```
 
 ## Submitting
@@ -405,13 +406,13 @@ The handler automatically calls `event.preventDefault()` when an `Event` argumen
 **Touched on submit:** When `handleSubmit` is called, all fields that have been accessed through the form tree are automatically marked as `touched` — before validation runs.
 
 ```ts
-form.name.$control.touched.value // false
-form.email.$control.touched.value // false
+form.name.$control.touched // false
+form.email.$control.touched // false
 
 await onSubmit()
 
-form.name.$control.touched.value // true
-form.email.$control.touched.value // true
+form.name.$control.touched // true
+form.email.$control.touched // true
 ```
 
 ## API
@@ -460,7 +461,7 @@ The root of the form tree. Provides navigation to all nested fields via proxy-ba
 
 ```ts
 const { form } = useForm({ user: { name: "John" } })
-form.user.name.$control.state.value // "John"
+form.user.name.$control.state // "John"
 ```
 
 #### `FormRoot.errors`
@@ -573,8 +574,8 @@ type InputControl<T> = {
 A writable `Ref` holding the current value of the field. Use with `v-model` for two-way binding.
 
 ```ts
-form.name.$control.state.value // read
-form.name.$control.state.value = "Jane" // write
+form.name.$control.state // read
+form.name.$control.state = "Jane" // write
 ```
 
 > When the state is updated, any existing validation errors for that field are automatically cleared.
@@ -584,7 +585,7 @@ form.name.$control.state.value = "Jane" // write
 A read-only `ComputedRef` holding the default/initial value of the field. Used internally for dirty checking.
 
 ```ts
-form.name.$control.defaultState.value // "John" (initial value)
+form.name.$control.defaultState // "John" (initial value)
 ```
 
 #### `InputControl.dirty`
@@ -592,10 +593,10 @@ form.name.$control.defaultState.value // "John" (initial value)
 A `ComputedRef<boolean>` that is `true` when the current value differs from the default value. Uses deep equality for objects.
 
 ```ts
-form.name.$control.dirty.value // false initially
+form.name.$control.dirty // false initially
 
-form.name.$control.state.value = "Jane"
-form.name.$control.dirty.value // true
+form.name.$control.state = "Jane"
+form.name.$control.dirty // true
 ```
 
 #### `InputControl.touched`
@@ -603,10 +604,10 @@ form.name.$control.dirty.value // true
 A `ComputedRef<boolean>` that is `true` after `setAsTouched()` has been called. Useful for showing validation errors only after user interaction.
 
 ```ts
-form.name.$control.touched.value // false
+form.name.$control.touched // false
 
 form.name.$control.setAsTouched()
-form.name.$control.touched.value // true
+form.name.$control.touched // true
 ```
 
 > **Note:** When using `handleSubmit`, all accessed fields are automatically marked as touched before validation. This means you can safely gate error visibility behind `touched` — errors will appear for all fields after the first submit attempt.
@@ -617,11 +618,11 @@ A `ComputedRef<boolean>` that is `true` when there are no validation errors for 
 
 ```ts
 // Before validation
-form.name.$control.isValid.value // true
+form.name.$control.isValid // true
 
 // After failed validation
 await validate()
-form.name.$control.isValid.value // false
+form.name.$control.isValid // false
 ```
 
 #### `InputControl.errorMessages`
@@ -630,7 +631,7 @@ A `ComputedRef<string[]>` containing all validation error messages for this fiel
 
 ```ts
 await validate()
-form.name.$control.errorMessages.value // ["Name is required"]
+form.name.$control.errorMessages // ["Name is required"]
 ```
 
 #### `InputControl.clear()`
@@ -639,7 +640,7 @@ Sets the field's state to `undefined`.
 
 ```ts
 form.name.$control.clear()
-form.name.$control.state.value // undefined
+form.name.$control.state // undefined
 ```
 
 #### `InputControl.reset()`
@@ -647,10 +648,10 @@ form.name.$control.state.value // undefined
 Resets the field's state back to its default value.
 
 ```ts
-form.name.$control.state.value = "modified"
+form.name.$control.state = "modified"
 form.name.$control.reset()
-form.name.$control.state.value // "John" (back to default)
-form.name.$control.dirty.value // false
+form.name.$control.state // "John" (back to default)
+form.name.$control.dirty // false
 ```
 
 #### `InputControl.updateDefaultState(newDefault?)`
@@ -659,7 +660,7 @@ Updates the default value for the field. Use with caution - changing the default
 
 ```ts
 form.name.$control.updateDefaultState("New Default")
-form.name.$control.defaultState.value // "New Default"
+form.name.$control.defaultState // "New Default"
 ```
 
 #### `InputControl.setAsTouched()`
@@ -668,7 +669,7 @@ Marks the field as touched. Typically called on blur events to track user intera
 
 ```html
 <input
-  v-model="form.name.$control.state.value"
+  v-model="form.name.$control.state"
   @blur="form.name.$control.setAsTouched()"
 />
 ```
@@ -727,8 +728,8 @@ form.tags.$control.moveItem(0, 2)
 ```ts
 const { form } = useForm({ name: "John", age: 30 })
 
-form.name.$control.state.value // string | undefined - fully typed
-form.age.$control.state.value // number | undefined - fully typed
+form.name.$control.state // string | undefined - fully typed
+form.age.$control.state // number | undefined - fully typed
 ```
 
 For forms where the initial state may be partial, provide a type parameter:
@@ -742,8 +743,8 @@ type UserForm = {
 
 const { form } = useForm<UserForm>({})
 
-form.name.$control.state.value // string | undefined
-form.email.$control.state.value // string | undefined
+form.name.$control.state // string | undefined
+form.email.$control.state // string | undefined
 ```
 
 ### Separate Input and Output Types
