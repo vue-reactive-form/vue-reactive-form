@@ -578,6 +578,91 @@ describe("useForm", () => {
     })
   })
 
+  describe("validateOn: blur", () => {
+    const schema = yup.object({
+      name: yup.string().required("Name is required"),
+      email: yup.string().email("Invalid email").required("Email is required")
+    })
+
+    it("should trigger validation when a field is blurred", async () => {
+      const { form, errors } = useForm(
+        { name: "", email: "" },
+        { validationSchema: schema, validateOn: "blur" }
+      )
+
+      // Focus then blur the name field
+      form.name.$control.fieldProps.onFocus()
+      form.name.$control.fieldProps.onBlur()
+
+      await new Promise((r) => setTimeout(r, 0))
+
+      // Only the blurred field's errors should be written
+      expect(errors.value.name).toBeDefined()
+      expect(errors.value.email).toBeUndefined()
+    })
+
+    it("should only show errors for touched fields via control", async () => {
+      const { form } = useForm(
+        { name: "", email: "" },
+        { validationSchema: schema, validateOn: "blur" }
+      )
+
+      // Focus + blur only the name field
+      form.name.$control.fieldProps.onFocus()
+      form.name.$control.fieldProps.onBlur()
+      await new Promise((r) => setTimeout(r, 0))
+
+      // Name field is touched — errors visible
+      expect(form.name.$control.isValid).toBe(false)
+      expect(form.name.$control.errorMessages).toEqual(["Name is required"])
+
+      // Email field is NOT touched — errors hidden
+      expect(form.email.$control.isValid).toBe(true)
+      expect(form.email.$control.errorMessages).toEqual([])
+    })
+
+    it("should show all errors after submit", async () => {
+      const { form, handleSubmit } = useForm(
+        { name: "", email: "" },
+        { validationSchema: schema, validateOn: "blur" }
+      )
+
+      // Access both fields
+      expect(form.name.$control.touched).toBe(false)
+      expect(form.email.$control.touched).toBe(false)
+
+      const onError = vi.fn()
+      const submit = handleSubmit({ onError })
+      await submit()
+
+      // After submit, all fields are touched — all errors visible
+      expect(form.name.$control.isValid).toBe(false)
+      expect(form.name.$control.errorMessages).toEqual(["Name is required"])
+      expect(form.email.$control.isValid).toBe(false)
+      expect(form.email.$control.errorMessages).toEqual(["Email is required"])
+    })
+
+    it("should not show errors for untouched fields even when form has errors", async () => {
+      const { form } = useForm(
+        { name: "", email: "valid@email.com" },
+        { validationSchema: schema, validateOn: "blur" }
+      )
+
+      // Focus + blur email (valid), which triggers validation
+      form.email.$control.fieldProps.onFocus()
+      form.email.$control.fieldProps.onBlur()
+      await new Promise((r) => setTimeout(r, 0))
+
+      // Email is touched and valid
+      expect(form.email.$control.isValid).toBe(true)
+      expect(form.email.$control.errorMessages).toEqual([])
+
+      // Name is invalid but untouched — errors hidden
+      expect(form.name.$control.isValid).toBe(true)
+      expect(form.name.$control.errorMessages).toEqual([])
+    })
+  })
+
   describe("Reactive validation schema", () => {
     it("should use updated schema when validation is invoked after schema ref changes", async () => {
       const lenientSchema = yup.object({

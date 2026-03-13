@@ -10,13 +10,15 @@ interface Props {
 const modelValue = defineModel<T>()
 
 defineProps<Props>()
+
+defineOptions({ inheritAttrs: false })
 </script>
 
 <template>
   <div class="labeled-input">
     <label>
       <div class="label-text">{{ label }}</div>
-      <input v-model="modelValue" :type class="input-field" />
+      <input v-model="modelValue" :type class="input-field" v-bind="$attrs" />
     </label>
     <div v-if="errors?.length" class="error-container">
       <div v-for="error in errors" :key="error" class="error-message">

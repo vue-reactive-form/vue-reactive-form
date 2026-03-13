@@ -82,18 +82,30 @@ export type FormContext<TState, TValidatedState = TState> = {
    * When successful returns the validated state, otherwise it returns undefined.
    */
   validate: () => Promise<TValidatedState | undefined>
+  /**
+   * Runs full validation but only updates the errors for a specific field.
+   * Used for blur-triggered validation so that only the blurred field's errors are updated.
+   *
+   * @param path The path of the field whose errors should be updated.
+   */
+  validateField: (path: PropertyPath) => Promise<void>
+  /** When validation is triggered: "submit" (default) or "blur" */
+  validateOn: ValidateOn
 }
 
-export type ValidateOn = "submit" | "change"
+export type ValidateOn = "submit" | "blur"
 
 export type UseFormContextOptions<TState, TValidatedState = TState> = {
   validationSchema?: MaybeRef<
     StandardSchemaV1<TState, TValidatedState> | undefined
   >
+  validateOn?: ValidateOn
 }
 
-export type UseFormOptions<TState, TValidatedState = TState> =
-  UseFormContextOptions<TState, TValidatedState>
+export type UseFormOptions<
+  TState,
+  TValidatedState = TState
+> = UseFormContextOptions<TState, TValidatedState>
 
 export type HandleSubmitOptions<TValidatedState> = {
   /**

@@ -1,4 +1,4 @@
-import { isEqual, isObject, type PropertyPath } from "lodash-es"
+import { cloneDeep, isEqual, isObject, type PropertyPath } from "lodash-es"
 import { deepPick } from "./utils"
 import type { InputControl } from "./types/controls"
 import type { FormContext } from "./types/useForm"
@@ -28,48 +28,64 @@ export const createInputControl = <TState>(
     getFieldState,
     getFieldErrors,
     isFieldTouched,
-    setFieldAsTouched
+    setFieldAsTouched,
+    validateField,
+    validateOn
   } = context
 
-  return {
+  const control: InputControl<TState> = {
     get state() {
       return getFieldState(path, "current")
     },
     set state(value: PartialOrPrimitive<TState> | undefined) {
       setFieldState(path, value, "current")
     },
-
     get defaultState() {
       return getFieldState(path, "default")
     },
     get dirty() {
-      return isDirty(
-        getFieldState(path, "current"),
-        getFieldState(path, "default")
-      )
+      return isDirty(control.state, control.defaultState)
     },
     get touched() {
       return isFieldTouched(path)
     },
-    get isValid() {
-      const issues = getFieldErrors(path)
-      return issues.length === 0
-    },
     get errorMessages() {
-      const issues = getFieldErrors(path)
-      return issues.map((issue) => issue.message)
+      return getFieldErrors(path).map((issue) => issue.message)
+    },
+    get isValid() {
+      return control.errorMessages.length === 0
     },
     clear() {
-      setFieldState(path, undefined, "current")
+      control.state = undefined
     },
     reset() {
-      setFieldState(path, getFieldState(path, "default"), "current")
+      control.state = cloneDeep(control.defaultState)
     },
     updateDefaultState(newDefaultState?: PartialOrPrimitive<TState>) {
       setFieldState(path, newDefaultState, "default")
     },
     setAsTouched() {
       setFieldAsTouched(path)
+    },
+    get fieldProps() {
+      return {
+        get modelValue() {
+          return control.state
+        },
+        "onUpdate:modelValue": (
+          value: PartialOrPrimitive<TState> | undefined
+        ) => {
+          control.state = value
+        },
+        onFocus: () => control.setAsTouched(),
+        onBlur: () => {
+          if (validateOn === "blur") {
+            validateField(path)
+          }
+        }
+      }
     }
   }
+
+  return control
 }
