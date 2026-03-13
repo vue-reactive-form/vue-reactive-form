@@ -1,16 +1,19 @@
-import { ref, type Ref } from "@vue/reactivity"
-import type { ControlsCache, FormContext, FormErrors } from "./types/useForm"
+import { ref, toValue, type Ref } from "@vue/reactivity"
+import type { ControlsCache, FormContext, FormErrors, UseFormContextOptions } from "./types/useForm"
 import type { PartialOrPrimitive } from "./types/utils"
-import { cloneDeep, get, set, type PropertyPath } from "lodash-es"
-import type { ValidationIssue } from "./validation"
+import { cloneDeep, get, set, groupBy, type PropertyPath } from "lodash-es"
+import { standardValidate, type ValidationIssue } from "./validation"
 
 const getPathAsString = (path: PropertyPath) => {
   return Array.isArray(path) && path.length ? path.join(".") : ""
 }
 
-export const useFormContext = <TState>(
-  defaultState?: PartialOrPrimitive<TState>
-): FormContext<PartialOrPrimitive<TState>> => {
+export const useFormContext = <TState, TValidatedState = TState>(
+  defaultState?: PartialOrPrimitive<TState>,
+  options: UseFormContextOptions<TState, TValidatedState> = {}
+): FormContext<PartialOrPrimitive<TState>, TValidatedState> => {
+  const { validationSchema } = options
+
   const defaultFormState = ref(cloneDeep(defaultState)) as Ref<
     PartialOrPrimitive<TState | undefined>
   >
@@ -72,6 +75,29 @@ export const useFormContext = <TState>(
     }
   }
 
+  const validate = async () => {
+    const schema = toValue(validationSchema)
+    if (!schema) {
+      console.warn(
+        "[vue-reactive-form] No validation schema provided. Skipping validation."
+      )
+      return state.value as unknown as TValidatedState // FIXME!!
+    }
+
+    errors.value = {}
+
+    const result = await standardValidate(schema, state.value)
+
+    if (!result.success) {
+      errors.value = groupBy(
+        result.issues,
+        (issue: ValidationIssue) => `${issue.path.join(".")}`
+      )
+    } else {
+      return result.output
+    }
+  }
+
   return {
     state,
     defaultFormState,
@@ -83,6 +109,7 @@ export const useFormContext = <TState>(
     setAllFieldsAsTouched,
     getFieldState,
     getFieldErrors,
-    isFieldTouched
+    isFieldTouched,
+    validate
   }
 }
