@@ -10,8 +10,8 @@ describe("createArrayInputControl", () => {
       const control = createArrayInputControl(context)
 
       control.add(4)
-      expect(control.state.value).toEqual([1, 2, 3, 4])
-      expect(control.dirty.value).toBe(true)
+      expect(control.state).toEqual([1, 2, 3, 4])
+      expect(control.dirty).toBe(true)
     })
 
     it("should add an item without a default value (undefined) to the array", () => {
@@ -20,8 +20,8 @@ describe("createArrayInputControl", () => {
       const control = createArrayInputControl(context)
 
       control.add()
-      expect(control.state.value).toEqual([1, 2, 3, undefined])
-      expect(control.dirty.value).toBe(true)
+      expect(control.state).toEqual([1, 2, 3, undefined])
+      expect(control.dirty).toBe(true)
     })
 
     it("should add objects to an array", () => {
@@ -30,12 +30,12 @@ describe("createArrayInputControl", () => {
       const control = createArrayInputControl(context)
 
       control.add({ name: "Bob" })
-      expect(control.state.value).toEqual([
+      expect(control.state).toEqual([
         { name: "John" },
         { name: "Jane" },
         { name: "Bob" }
       ])
-      expect(control.dirty.value).toBe(true)
+      expect(control.dirty).toBe(true)
     })
 
     it("should add empty object to an array", () => {
@@ -44,12 +44,12 @@ describe("createArrayInputControl", () => {
       const control = createArrayInputControl(context)
 
       control.add({})
-      expect(control.state.value).toEqual([
+      expect(control.state).toEqual([
         { name: "John" },
         { name: "Jane" },
         {}
       ])
-      expect(control.dirty.value).toBe(true)
+      expect(control.dirty).toBe(true)
     })
 
     it("should handle adding to an empty array", () => {
@@ -58,8 +58,8 @@ describe("createArrayInputControl", () => {
       const control = createArrayInputControl(context)
 
       control.add("first item")
-      expect(control.state.value).toEqual(["first item"])
-      expect(control.dirty.value).toBe(true)
+      expect(control.state).toEqual(["first item"])
+      expect(control.dirty).toBe(true)
     })
 
     it("should handle adding when state is undefined", () => {
@@ -68,7 +68,7 @@ describe("createArrayInputControl", () => {
       const control = createArrayInputControl(context)
 
       control.add("item")
-      expect(control.state.value).toEqual(["item"])
+      expect(control.state).toEqual(["item"])
     })
   })
 
@@ -79,8 +79,8 @@ describe("createArrayInputControl", () => {
       const control = createArrayInputControl(context)
 
       control.remove(1) // Remove element at index 1 (value 2)
-      expect(control.state.value).toEqual([1, 3, 4])
-      expect(control.dirty.value).toBe(true)
+      expect(control.state).toEqual([1, 3, 4])
+      expect(control.dirty).toBe(true)
     })
 
     it("should remove the first item", () => {
@@ -89,8 +89,8 @@ describe("createArrayInputControl", () => {
       const control = createArrayInputControl(context)
 
       control.remove(0)
-      expect(control.state.value).toEqual(["b", "c"])
-      expect(control.dirty.value).toBe(true)
+      expect(control.state).toEqual(["b", "c"])
+      expect(control.dirty).toBe(true)
     })
 
     it("should remove the last item", () => {
@@ -99,8 +99,8 @@ describe("createArrayInputControl", () => {
       const control = createArrayInputControl(context)
 
       control.remove(2)
-      expect(control.state.value).toEqual(["a", "b"])
-      expect(control.dirty.value).toBe(true)
+      expect(control.state).toEqual(["a", "b"])
+      expect(control.dirty).toBe(true)
     })
 
     it("should remove objects from an array", () => {
@@ -113,11 +113,11 @@ describe("createArrayInputControl", () => {
       const control = createArrayInputControl(context)
 
       control.remove(1) // Remove Jane
-      expect(control.state.value).toEqual([
+      expect(control.state).toEqual([
         { id: 1, name: "John" },
         { id: 3, name: "Bob" }
       ])
-      expect(control.dirty.value).toBe(true)
+      expect(control.dirty).toBe(true)
     })
 
     it("should handle removing from a single-item array", () => {
@@ -126,8 +126,8 @@ describe("createArrayInputControl", () => {
       const control = createArrayInputControl(context)
 
       control.remove(0)
-      expect(control.state.value).toEqual([])
-      expect(control.dirty.value).toBe(true)
+      expect(control.state).toEqual([])
+      expect(control.dirty).toBe(true)
     })
 
     it("should handle removing when state is undefined", () => {
@@ -137,7 +137,7 @@ describe("createArrayInputControl", () => {
 
       // Should not throw an error
       control.remove(0)
-      expect(control.state.value).toBe(undefined)
+      expect(control.state).toBe(undefined)
     })
   })
 
@@ -148,8 +148,8 @@ describe("createArrayInputControl", () => {
       const control = createArrayInputControl(context)
 
       control.moveItem(0, 2) // Move "a" from index 0 to index 2
-      expect(control.state.value).toEqual(["b", "c", "a", "d"])
-      expect(control.dirty.value).toBe(true)
+      expect(control.state).toEqual(["b", "c", "a", "d"])
+      expect(control.dirty).toBe(true)
     })
 
     it("should move an item forward in the array", () => {
@@ -158,8 +158,8 @@ describe("createArrayInputControl", () => {
       const control = createArrayInputControl(context)
 
       control.moveItem(1, 3) // Move element at index 1 to index 3
-      expect(control.state.value).toEqual([1, 3, 4, 2, 5])
-      expect(control.dirty.value).toBe(true)
+      expect(control.state).toEqual([1, 3, 4, 2, 5])
+      expect(control.dirty).toBe(true)
     })
 
     it("should move an item backward in the array", () => {
@@ -168,8 +168,8 @@ describe("createArrayInputControl", () => {
       const control = createArrayInputControl(context)
 
       control.moveItem(3, 1) // Move element at index 3 to index 1
-      expect(control.state.value).toEqual([1, 4, 2, 3, 5])
-      expect(control.dirty.value).toBe(true)
+      expect(control.state).toEqual([1, 4, 2, 3, 5])
+      expect(control.dirty).toBe(true)
     })
 
     it("should handle moving to the same index (no change)", () => {
@@ -178,8 +178,8 @@ describe("createArrayInputControl", () => {
       const control = createArrayInputControl(context)
 
       control.moveItem(1, 1) // Move item at index 1 to index 1
-      expect(control.state.value).toEqual(["a", "b", "c"])
-      expect(control.dirty.value).toBe(false)
+      expect(control.state).toEqual(["a", "b", "c"])
+      expect(control.dirty).toBe(false)
     })
 
     it("should move objects in an array", () => {
@@ -192,12 +192,12 @@ describe("createArrayInputControl", () => {
       const control = createArrayInputControl(context)
 
       control.moveItem(0, 2) // Move John from first to last position
-      expect(control.state.value).toEqual([
+      expect(control.state).toEqual([
         { id: 2, name: "Jane" },
         { id: 3, name: "Bob" },
         { id: 1, name: "John" }
       ])
-      expect(control.dirty.value).toBe(true)
+      expect(control.dirty).toBe(true)
     })
 
     it("should clamp indices to array bounds", () => {
@@ -208,8 +208,8 @@ describe("createArrayInputControl", () => {
       // Move with out-of-bounds indices should be clamped
       control.moveItem(-1, 10) // Should clamp to valid indices
       // The exact behavior depends on the implementation, but should not throw
-      expect(Array.isArray(control.state.value)).toBe(true)
-      expect(control.state.value?.length).toBe(3)
+      expect(Array.isArray(control.state)).toBe(true)
+      expect(control.state?.length).toBe(3)
     })
 
     it("should handle moving in a two-element array", () => {
@@ -218,8 +218,8 @@ describe("createArrayInputControl", () => {
       const control = createArrayInputControl(context)
 
       control.moveItem(0, 1) // Swap elements
-      expect(control.state.value).toEqual(["second", "first"])
-      expect(control.dirty.value).toBe(true)
+      expect(control.state).toEqual(["second", "first"])
+      expect(control.dirty).toBe(true)
     })
 
     it("should handle moving when state is undefined", () => {
@@ -229,7 +229,7 @@ describe("createArrayInputControl", () => {
 
       // Should not throw an error
       control.moveItem(0, 1)
-      expect(control.state.value).toBe(undefined)
+      expect(control.state).toBe(undefined)
     })
   })
 })

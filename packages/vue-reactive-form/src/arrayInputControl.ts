@@ -10,33 +10,33 @@ export const createArrayInputControl = <TState extends Array<unknown>>(
   const inputControl = createInputControl<TState>(context, path)
 
   const add = (defaultValue?: PartialOrPrimitive<TState[number]>) => {
-    if (!inputControl.state.value) {
-      inputControl.state.value = [] as unknown as PartialOrPrimitive<TState>
+    if (!inputControl.state) {
+      inputControl.state = [] as unknown as PartialOrPrimitive<TState>
     }
-    inputControl.state.value?.push(defaultValue as any)
+    ;(inputControl.state as any[]).push(defaultValue as any)
   }
 
   const remove = (index: number) => {
-    inputControl.state.value?.splice(index, 1)
+    ;(inputControl.state as any[])?.splice(index, 1)
   }
 
   const moveItem = (fromIndex: number, toIndex: number) => {
     // Clamp indices to array bounds
-    const maxIndex = (inputControl.state.value ?? []).length - 1
+    const currentState = (inputControl.state as any[]) ?? []
+    const maxIndex = currentState.length - 1
     const start = Math.max(0, Math.min(maxIndex, fromIndex))
     const end = Math.max(0, Math.min(maxIndex, toIndex))
 
     // Remove the item
-    const [item] = (inputControl.state.value ?? []).splice(start, 1)
+    const [item] = currentState.splice(start, 1)
 
     // Insert the item at the new position
-    inputControl.state.value?.splice(end, 0, item)
+    currentState.splice(end, 0, item)
   }
 
-  return {
-    ...inputControl,
+  return Object.assign(inputControl, {
     add,
     remove,
     moveItem
-  }
+  })
 }

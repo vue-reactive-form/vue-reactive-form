@@ -8,18 +8,18 @@ describe("createInputControl", () => {
       const context = useFormContext("bar")
       const control = createInputControl(context)
 
-      expect(control.state.value).toBe("bar")
-      expect(control.defaultState.value).toBe("bar")
-      expect(control.dirty.value).toBe(false)
+      expect(control.state).toBe("bar")
+      expect(control.defaultState).toBe("bar")
+      expect(control.dirty).toBe(false)
     })
 
     it("should handle state changes and dirty detection", () => {
       const context = useFormContext("bar")
       const control = createInputControl(context)
 
-      control.state.value = "baz"
-      expect(control.state.value).toBe("baz")
-      expect(control.dirty.value).toBe(true)
+      control.state = "baz"
+      expect(control.state).toBe("baz")
+      expect(control.dirty).toBe(true)
     })
 
     it("should reset to default value and clear dirty state", () => {
@@ -28,12 +28,12 @@ describe("createInputControl", () => {
       setFieldState([], "baz", "current")
       const control = createInputControl(context)
 
-      control.state.value = "baz"
-      expect(control.dirty.value).toBe(true)
+      control.state = "baz"
+      expect(control.dirty).toBe(true)
 
       control.reset()
-      expect(control.state.value).toBe("bar")
-      expect(control.dirty.value).toBe(false)
+      expect(control.state).toBe("bar")
+      expect(control.dirty).toBe(false)
     })
 
     it("should clear the value and set dirty to true", () => {
@@ -41,8 +41,8 @@ describe("createInputControl", () => {
       const control = createInputControl(context)
 
       control.clear()
-      expect(control.state.value).toBe(undefined)
-      expect(control.dirty.value).toBe(true)
+      expect(control.state).toBe(undefined)
+      expect(control.dirty).toBe(true)
     })
 
     it("should update the default value", () => {
@@ -50,12 +50,12 @@ describe("createInputControl", () => {
       const control = createInputControl(context)
 
       control.updateDefaultState("qux")
-      expect(control.defaultState.value).toBe("qux")
-      expect(control.dirty.value).toBe(true)
+      expect(control.defaultState).toBe("qux")
+      expect(control.dirty).toBe(true)
 
       control.reset()
-      expect(control.state.value).toBe("qux")
-      expect(control.dirty.value).toBe(false)
+      expect(control.state).toBe("qux")
+      expect(control.dirty).toBe(false)
     })
 
     it("should handle undefined initial values", () => {
@@ -63,28 +63,28 @@ describe("createInputControl", () => {
 
       const control = createInputControl(context)
 
-      expect(control.state.value).toBe(undefined)
-      expect(control.defaultState.value).toBe(undefined)
-      expect(control.dirty.value).toBe(false)
+      expect(control.state).toBe(undefined)
+      expect(control.defaultState).toBe(undefined)
+      expect(control.dirty).toBe(false)
 
-      control.state.value = "something"
-      expect(control.state.value).toBe("something")
-      expect(control.dirty.value).toBe(true)
+      control.state = "something"
+      expect(control.state).toBe("something")
+      expect(control.dirty).toBe(true)
     })
 
     it("should handle setting default state to undefined", () => {
       const context = useFormContext("bar")
       const control = createInputControl(context)
 
-      expect(control.dirty.value).toBe(false)
+      expect(control.dirty).toBe(false)
 
       control.updateDefaultState(undefined)
-      expect(control.defaultState.value).toBe(undefined)
-      expect(control.dirty.value).toBe(true)
+      expect(control.defaultState).toBe(undefined)
+      expect(control.dirty).toBe(true)
 
       control.reset()
-      expect(control.state.value).toBe(undefined)
-      expect(control.dirty.value).toBe(false)
+      expect(control.state).toBe(undefined)
+      expect(control.dirty).toBe(false)
     })
 
     describe("validation properties", () => {
@@ -92,8 +92,8 @@ describe("createInputControl", () => {
         const context = useFormContext("valid value")
         const control = createInputControl(context)
 
-        expect(control.isValid.value).toBe(true)
-        expect(control.errorMessages.value).toEqual([])
+        expect(control.isValid).toBe(true)
+        expect(control.errorMessages).toEqual([])
       })
 
       it("should report isValid as false when there are errors", () => {
@@ -111,8 +111,8 @@ describe("createInputControl", () => {
         }
         const control = createInputControl(context)
 
-        expect(control.isValid.value).toBe(false)
-        expect(control.errorMessages.value).toEqual([
+        expect(control.isValid).toBe(false)
+        expect(control.errorMessages).toEqual([
           "Value is required",
           "Value must be at least 3 characters"
         ])
@@ -123,22 +123,22 @@ describe("createInputControl", () => {
         const { errors } = context
         const control = createInputControl(context)
 
-        expect(control.isValid.value).toBe(true)
-        expect(control.errorMessages.value).toEqual([])
+        expect(control.isValid).toBe(true)
+        expect(control.errorMessages).toEqual([])
 
         // Add errors - for root level control, errors are stored with empty string key
         errors.value = {
           "": [{ message: "This field is invalid", path: [] }]
         }
 
-        expect(control.isValid.value).toBe(false)
-        expect(control.errorMessages.value).toEqual(["This field is invalid"])
+        expect(control.isValid).toBe(false)
+        expect(control.errorMessages).toEqual(["This field is invalid"])
 
         // Clear errors
         errors.value = {}
 
-        expect(control.isValid.value).toBe(true)
-        expect(control.errorMessages.value).toEqual([])
+        expect(control.isValid).toBe(true)
+        expect(control.errorMessages).toEqual([])
       })
 
       it("should clear error messages when updating the state", () => {
@@ -148,13 +148,13 @@ describe("createInputControl", () => {
 
         setFieldErrors([], [{ message: "Some error", path: [] }])
 
-        expect(control.isValid.value).toBe(false)
-        expect(control.errorMessages.value).toEqual(["Some error"])
+        expect(control.isValid).toBe(false)
+        expect(control.errorMessages).toEqual(["Some error"])
 
-        control.state.value = "new value"
+        control.state = "new value"
 
-        expect(control.isValid.value).toBe(true)
-        expect(control.errorMessages.value).toEqual([])
+        expect(control.isValid).toBe(true)
+        expect(control.errorMessages).toEqual([])
       })
 
       it("should handle empty errors object gracefully", () => {
@@ -162,8 +162,8 @@ describe("createInputControl", () => {
 
         const control = createInputControl(context)
 
-        expect(control.isValid.value).toBe(true)
-        expect(control.errorMessages.value).toEqual([])
+        expect(control.isValid).toBe(true)
+        expect(control.errorMessages).toEqual([])
       })
 
       it("should handle empty error arrays", () => {
@@ -172,8 +172,8 @@ describe("createInputControl", () => {
         errors.value = { "": [] }
         const control = createInputControl(context)
 
-        expect(control.isValid.value).toBe(true)
-        expect(control.errorMessages.value).toEqual([])
+        expect(control.isValid).toBe(true)
+        expect(control.errorMessages).toEqual([])
       })
     })
 
@@ -182,18 +182,18 @@ describe("createInputControl", () => {
         const context = useFormContext("bar")
         const control = createInputControl(context)
 
-        expect(control.touched.value).toBe(false)
+        expect(control.touched).toBe(false)
       })
 
       it("should become touched after calling setAsTouched", () => {
         const context = useFormContext("bar")
         const control = createInputControl(context)
 
-        expect(control.touched.value).toBe(false)
+        expect(control.touched).toBe(false)
 
         control.setAsTouched()
 
-        expect(control.touched.value).toBe(true)
+        expect(control.touched).toBe(true)
       })
 
       it("should remain touched after multiple setAsTouched calls", () => {
@@ -203,7 +203,7 @@ describe("createInputControl", () => {
         control.setAsTouched()
         control.setAsTouched()
 
-        expect(control.touched.value).toBe(true)
+        expect(control.touched).toBe(true)
       })
 
       it("should remain touched after state changes", () => {
@@ -211,11 +211,11 @@ describe("createInputControl", () => {
         const control = createInputControl(context)
 
         control.setAsTouched()
-        expect(control.touched.value).toBe(true)
+        expect(control.touched).toBe(true)
 
-        control.state.value = "new value"
+        control.state = "new value"
 
-        expect(control.touched.value).toBe(true)
+        expect(control.touched).toBe(true)
       })
 
       it("should remain touched after reset", () => {
@@ -223,10 +223,10 @@ describe("createInputControl", () => {
         const control = createInputControl(context)
 
         control.setAsTouched()
-        control.state.value = "changed"
+        control.state = "changed"
         control.reset()
 
-        expect(control.touched.value).toBe(true)
+        expect(control.touched).toBe(true)
       })
 
       it("should remain touched after clear", () => {
@@ -236,7 +236,7 @@ describe("createInputControl", () => {
         control.setAsTouched()
         control.clear()
 
-        expect(control.touched.value).toBe(true)
+        expect(control.touched).toBe(true)
       })
     })
   })
@@ -246,39 +246,39 @@ describe("createInputControl", () => {
       const context = useFormContext({ name: "John", age: 30 })
       const control = createInputControl(context)
 
-      expect(control.state.value).toEqual({ name: "John", age: 30 })
-      expect(control.defaultState.value).toEqual({ name: "John", age: 30 })
-      expect(control.dirty.value).toBe(false)
+      expect(control.state).toEqual({ name: "John", age: 30 })
+      expect(control.defaultState).toEqual({ name: "John", age: 30 })
+      expect(control.dirty).toBe(false)
     })
 
     it("should handle state changes and dirty detection", () => {
       const context = useFormContext({ name: "John", age: 30 })
       const control = createInputControl(context)
 
-      control.state.value = { name: "Jane", age: 25 }
-      expect(control.state.value).toEqual({ name: "Jane", age: 25 })
-      expect(control.dirty.value).toBe(true)
+      control.state = { name: "Jane", age: 25 }
+      expect(control.state).toEqual({ name: "Jane", age: 25 })
+      expect(control.dirty).toBe(true)
     })
 
     it("should handle state overrides with partial objects, deleting all properties not passed in the new state", () => {
       const context = useFormContext({ name: "John", age: 30 })
       const control = createInputControl(context)
 
-      control.state.value = { name: "Jane" }
-      expect(control.state.value).toEqual({ name: "Jane" })
-      expect(control.dirty.value).toBe(true)
+      control.state = { name: "Jane" }
+      expect(control.state).toEqual({ name: "Jane" })
+      expect(control.dirty).toBe(true)
     })
 
     it("should reset to default value and clear dirty state", () => {
       const context = useFormContext({ name: "John", age: 30 })
       const control = createInputControl(context)
 
-      control.state.value = { name: "Jane", age: 25 }
-      expect(control.dirty.value).toBe(true)
+      control.state = { name: "Jane", age: 25 }
+      expect(control.dirty).toBe(true)
 
       control.reset()
-      expect(control.state.value).toEqual({ name: "John", age: 30 })
-      expect(control.dirty.value).toBe(false)
+      expect(control.state).toEqual({ name: "John", age: 30 })
+      expect(control.dirty).toBe(false)
     })
 
     it("should clear the value and set dirty to true", () => {
@@ -286,8 +286,8 @@ describe("createInputControl", () => {
       const control = createInputControl(context)
 
       control.clear()
-      expect(control.state.value).toBe(undefined)
-      expect(control.dirty.value).toBe(true)
+      expect(control.state).toBe(undefined)
+      expect(control.dirty).toBe(true)
     })
 
     it("should update the default value", () => {
@@ -296,12 +296,12 @@ describe("createInputControl", () => {
 
       const newDefault = { name: "Bob", age: 40 }
       control.updateDefaultState(newDefault)
-      expect(control.defaultState.value).toEqual(newDefault)
-      expect(control.dirty.value).toBe(true)
+      expect(control.defaultState).toEqual(newDefault)
+      expect(control.dirty).toBe(true)
 
       control.reset()
-      expect(control.state.value).toEqual(newDefault)
-      expect(control.dirty.value).toBe(false)
+      expect(control.state).toEqual(newDefault)
+      expect(control.dirty).toBe(false)
     })
 
     it("should handle nested objects", () => {
@@ -311,15 +311,15 @@ describe("createInputControl", () => {
 
       const control = createInputControl(context, ["user", "profile", "name"])
 
-      expect(control.state.value).toBe("John")
-      expect(control.dirty.value).toBe(false)
+      expect(control.state).toBe("John")
+      expect(control.dirty).toBe(false)
 
-      control.state.value = "Jane"
-      expect(control.dirty.value).toBe(true)
+      control.state = "Jane"
+      expect(control.dirty).toBe(true)
 
       control.reset()
-      expect(control.state.value).toBe("John")
-      expect(control.dirty.value).toBe(false)
+      expect(control.state).toBe("John")
+      expect(control.dirty).toBe(false)
     })
 
     it("should handle deeply nested object changes", () => {
@@ -329,12 +329,12 @@ describe("createInputControl", () => {
 
       const control = createInputControl(context)
 
-      control.state.value = { level1: { level2: { value: 100 } } }
-      expect(control.dirty.value).toBe(true)
+      control.state = { level1: { level2: { value: 100 } } }
+      expect(control.dirty).toBe(true)
 
       control.reset()
-      expect(control.state.value).toEqual({ level1: { level2: { value: 42 } } })
-      expect(control.dirty.value).toBe(false)
+      expect(control.state).toEqual({ level1: { level2: { value: 42 } } })
+      expect(control.dirty).toBe(false)
     })
 
     it("should handle arrays nested in object state", () => {
@@ -347,15 +347,15 @@ describe("createInputControl", () => {
 
       const control = createInputControl(context, ["user", "hobbies"])
 
-      expect(control.state.value).toEqual(["reading", "swimming"])
-      expect(control.dirty.value).toBe(false)
+      expect(control.state).toEqual(["reading", "swimming"])
+      expect(control.dirty).toBe(false)
 
-      control.state.value = ["reading", "cycling"]
-      expect(control.dirty.value).toBe(true)
+      control.state = ["reading", "cycling"]
+      expect(control.dirty).toBe(true)
 
       control.reset()
-      expect(control.state.value).toEqual(["reading", "swimming"])
-      expect(control.dirty.value).toBe(false)
+      expect(control.state).toEqual(["reading", "swimming"])
+      expect(control.dirty).toBe(false)
     })
 
     it("should handle setting default state to undefined", () => {
@@ -363,15 +363,15 @@ describe("createInputControl", () => {
 
       const control = createInputControl(context)
 
-      expect(control.dirty.value).toBe(false)
+      expect(control.dirty).toBe(false)
 
       control.updateDefaultState(undefined)
-      expect(control.defaultState.value).toBe(undefined)
-      expect(control.dirty.value).toBe(true)
+      expect(control.defaultState).toBe(undefined)
+      expect(control.dirty).toBe(true)
 
       control.reset()
-      expect(control.state.value).toBe(undefined)
-      expect(control.dirty.value).toBe(false)
+      expect(control.state).toBe(undefined)
+      expect(control.dirty).toBe(false)
     })
 
     describe("validation properties for object paths", () => {
@@ -383,13 +383,13 @@ describe("createInputControl", () => {
         }
         const nameControl = createInputControl(context, ["name"])
 
-        expect(nameControl.isValid.value).toBe(false)
-        expect(nameControl.errorMessages.value).toEqual(["Name is required"])
+        expect(nameControl.isValid).toBe(false)
+        expect(nameControl.errorMessages).toEqual(["Name is required"])
 
         // Age field should be valid since it has no errors
         const ageControl = createInputControl(context, ["age"])
-        expect(ageControl.isValid.value).toBe(true)
-        expect(ageControl.errorMessages.value).toEqual([])
+        expect(ageControl.isValid).toBe(true)
+        expect(ageControl.errorMessages).toEqual([])
       })
 
       it("should handle deeply nested field validation", () => {
@@ -419,8 +419,8 @@ describe("createInputControl", () => {
           "email"
         ])
 
-        expect(emailControl.isValid.value).toBe(false)
-        expect(emailControl.errorMessages.value).toEqual([
+        expect(emailControl.isValid).toBe(false)
+        expect(emailControl.errorMessages).toEqual([
           "Invalid email format"
         ])
 
@@ -430,16 +430,16 @@ describe("createInputControl", () => {
           "profile",
           "name"
         ])
-        expect(nameControl.isValid.value).toBe(true)
-        expect(nameControl.errorMessages.value).toEqual([])
+        expect(nameControl.isValid).toBe(true)
+        expect(nameControl.errorMessages).toEqual([])
       })
 
       it("should react to changes in nested errors", () => {
         const context = useFormContext({ user: { name: "John" } })
         const { errors } = context
         const nameControl = createInputControl(context, ["user", "name"])
-        expect(nameControl.isValid.value).toBe(true)
-        expect(nameControl.errorMessages.value).toEqual([])
+        expect(nameControl.isValid).toBe(true)
+        expect(nameControl.errorMessages).toEqual([])
 
         // Add error for nested field
         errors.value = {
@@ -452,14 +452,14 @@ describe("createInputControl", () => {
           ]
         }
 
-        expect(nameControl.isValid.value).toBe(false)
-        expect(nameControl.errorMessages.value).toEqual(["Name must be longer"])
+        expect(nameControl.isValid).toBe(false)
+        expect(nameControl.errorMessages).toEqual(["Name must be longer"])
 
         // Clear errors
         errors.value = {}
 
-        expect(nameControl.isValid.value).toBe(true)
-        expect(nameControl.errorMessages.value).toEqual([])
+        expect(nameControl.isValid).toBe(true)
+        expect(nameControl.errorMessages).toEqual([])
       })
     })
 
@@ -469,8 +469,8 @@ describe("createInputControl", () => {
         const nameControl = createInputControl(context, ["name"])
         const ageControl = createInputControl(context, ["age"])
 
-        expect(nameControl.touched.value).toBe(false)
-        expect(ageControl.touched.value).toBe(false)
+        expect(nameControl.touched).toBe(false)
+        expect(ageControl.touched).toBe(false)
       })
 
       it("should touch only the specific nested field", () => {
@@ -480,8 +480,8 @@ describe("createInputControl", () => {
 
         nameControl.setAsTouched()
 
-        expect(nameControl.touched.value).toBe(true)
-        expect(ageControl.touched.value).toBe(false)
+        expect(nameControl.touched).toBe(true)
+        expect(ageControl.touched).toBe(false)
       })
 
       it("should handle deeply nested paths independently", () => {
@@ -504,13 +504,13 @@ describe("createInputControl", () => {
 
         nameControl.setAsTouched()
 
-        expect(nameControl.touched.value).toBe(true)
-        expect(themeControl.touched.value).toBe(false)
+        expect(nameControl.touched).toBe(true)
+        expect(themeControl.touched).toBe(false)
 
         themeControl.setAsTouched()
 
-        expect(nameControl.touched.value).toBe(true)
-        expect(themeControl.touched.value).toBe(true)
+        expect(nameControl.touched).toBe(true)
+        expect(themeControl.touched).toBe(true)
       })
 
       it("should remain touched after state changes on nested path", () => {
@@ -518,9 +518,9 @@ describe("createInputControl", () => {
         const nameControl = createInputControl(context, ["name"])
 
         nameControl.setAsTouched()
-        nameControl.state.value = "Jane"
+        nameControl.state = "Jane"
 
-        expect(nameControl.touched.value).toBe(true)
+        expect(nameControl.touched).toBe(true)
       })
 
       it("should remain touched after reset on nested path", () => {
@@ -528,11 +528,11 @@ describe("createInputControl", () => {
         const nameControl = createInputControl(context, ["name"])
 
         nameControl.setAsTouched()
-        nameControl.state.value = "Jane"
+        nameControl.state = "Jane"
         nameControl.reset()
 
-        expect(nameControl.touched.value).toBe(true)
-        expect(nameControl.state.value).toBe("John")
+        expect(nameControl.touched).toBe(true)
+        expect(nameControl.state).toBe("John")
       })
     })
   })
@@ -542,30 +542,30 @@ describe("createInputControl", () => {
       const context = useFormContext([1, 2, 3])
       const control = createInputControl(context)
 
-      expect(control.state.value).toEqual([1, 2, 3])
-      expect(control.defaultState.value).toEqual([1, 2, 3])
-      expect(control.dirty.value).toBe(false)
+      expect(control.state).toEqual([1, 2, 3])
+      expect(control.defaultState).toEqual([1, 2, 3])
+      expect(control.dirty).toBe(false)
     })
 
     it("should handle state changes and dirty detection", () => {
       const context = useFormContext([1, 2, 3])
       const control = createInputControl(context)
 
-      control.state.value = [1, 2, 4]
-      expect(control.state.value).toEqual([1, 2, 4])
-      expect(control.dirty.value).toBe(true)
+      control.state = [1, 2, 4]
+      expect(control.state).toEqual([1, 2, 4])
+      expect(control.dirty).toBe(true)
     })
 
     it("should reset to default value and clear dirty state", () => {
       const context = useFormContext([1, 2, 3])
       const control = createInputControl(context)
 
-      control.state.value = [1, 2, 4]
-      expect(control.dirty.value).toBe(true)
+      control.state = [1, 2, 4]
+      expect(control.dirty).toBe(true)
 
       control.reset()
-      expect(control.state.value).toEqual([1, 2, 3])
-      expect(control.dirty.value).toBe(false)
+      expect(control.state).toEqual([1, 2, 3])
+      expect(control.dirty).toBe(false)
     })
 
     it("should clear the value and set dirty to true", () => {
@@ -573,8 +573,8 @@ describe("createInputControl", () => {
       const control = createInputControl(context)
 
       control.clear()
-      expect(control.state.value).toBe(undefined)
-      expect(control.dirty.value).toBe(true)
+      expect(control.state).toBe(undefined)
+      expect(control.dirty).toBe(true)
     })
 
     it("should update the default value", () => {
@@ -583,32 +583,32 @@ describe("createInputControl", () => {
 
       const newDefault = [4, 5, 6]
       control.updateDefaultState(newDefault)
-      expect(control.defaultState.value).toEqual(newDefault)
-      expect(control.dirty.value).toBe(true)
+      expect(control.defaultState).toEqual(newDefault)
+      expect(control.dirty).toBe(true)
 
       control.reset()
-      expect(control.state.value).toEqual(newDefault)
-      expect(control.dirty.value).toBe(false)
+      expect(control.state).toEqual(newDefault)
+      expect(control.dirty).toBe(false)
     })
 
     it("should handle array element access", () => {
       const context = useFormContext([1, 2, 3])
       const control = createInputControl(context, [0])
 
-      expect(control.state.value).toBe(1)
-      expect(control.defaultState.value).toBe(1)
-      expect(control.dirty.value).toBe(false)
+      expect(control.state).toBe(1)
+      expect(control.defaultState).toBe(1)
+      expect(control.dirty).toBe(false)
 
-      control.state.value = 5
-      expect(control.dirty.value).toBe(true)
+      control.state = 5
+      expect(control.dirty).toBe(true)
 
       control.reset()
-      expect(control.state.value).toBe(1)
-      expect(control.dirty.value).toBe(false)
+      expect(control.state).toBe(1)
+      expect(control.dirty).toBe(false)
 
       control.clear()
-      expect(control.state.value).toBe(undefined)
-      expect(control.dirty.value).toBe(true)
+      expect(control.state).toBe(undefined)
+      expect(control.dirty).toBe(true)
     })
 
     it("should handle nested arrays", () => {
@@ -619,24 +619,24 @@ describe("createInputControl", () => {
 
       const control = createInputControl(context)
 
-      expect(control.state.value).toEqual([
+      expect(control.state).toEqual([
         [1, 2],
         [3, 4]
       ])
-      expect(control.dirty.value).toBe(false)
+      expect(control.dirty).toBe(false)
 
-      control.state.value = [
+      control.state = [
         [1, 2],
         [3, 5]
       ]
-      expect(control.dirty.value).toBe(true)
+      expect(control.dirty).toBe(true)
 
       control.reset()
-      expect(control.state.value).toEqual([
+      expect(control.state).toEqual([
         [1, 2],
         [3, 4]
       ])
-      expect(control.dirty.value).toBe(false)
+      expect(control.dirty).toBe(false)
     })
 
     it("should handle nested array element access", () => {
@@ -647,62 +647,62 @@ describe("createInputControl", () => {
 
       const control = createInputControl(context, [1, 0])
 
-      expect(control.state.value).toBe(3)
-      expect(control.defaultState.value).toBe(3)
-      expect(control.dirty.value).toBe(false)
+      expect(control.state).toBe(3)
+      expect(control.defaultState).toBe(3)
+      expect(control.dirty).toBe(false)
 
-      control.state.value = 7
-      expect(control.dirty.value).toBe(true)
+      control.state = 7
+      expect(control.dirty).toBe(true)
 
       control.reset()
-      expect(control.state.value).toBe(3)
-      expect(control.dirty.value).toBe(false)
+      expect(control.state).toBe(3)
+      expect(control.dirty).toBe(false)
     })
 
     it("should handle array of objects", () => {
       const context = useFormContext([{ a: 1 }, { a: 2 }])
       const control = createInputControl(context)
 
-      expect(control.state.value).toEqual([{ a: 1 }, { a: 2 }])
-      expect(control.dirty.value).toBe(false)
+      expect(control.state).toEqual([{ a: 1 }, { a: 2 }])
+      expect(control.dirty).toBe(false)
 
-      control.state.value = [{ a: 1 }, { a: 3 }]
-      expect(control.dirty.value).toBe(true)
+      control.state = [{ a: 1 }, { a: 3 }]
+      expect(control.dirty).toBe(true)
 
       control.reset()
-      expect(control.state.value).toEqual([{ a: 1 }, { a: 2 }])
-      expect(control.dirty.value).toBe(false)
+      expect(control.state).toEqual([{ a: 1 }, { a: 2 }])
+      expect(control.dirty).toBe(false)
     })
 
     it("should handle object property within array", () => {
       const context = useFormContext([{ a: 1 }, { a: 2 }])
       const control = createInputControl(context, [1, "a"])
 
-      expect(control.state.value).toBe(2)
-      expect(control.defaultState.value).toBe(2)
-      expect(control.dirty.value).toBe(false)
+      expect(control.state).toBe(2)
+      expect(control.defaultState).toBe(2)
+      expect(control.dirty).toBe(false)
 
-      control.state.value = 5
-      expect(control.dirty.value).toBe(true)
+      control.state = 5
+      expect(control.dirty).toBe(true)
 
       control.reset()
-      expect(control.state.value).toBe(2)
-      expect(control.dirty.value).toBe(false)
+      expect(control.state).toBe(2)
+      expect(control.dirty).toBe(false)
     })
 
     it("should handle setting default state to undefined", () => {
       const context = useFormContext([1, 2, 3])
       const control = createInputControl(context)
 
-      expect(control.dirty.value).toBe(false)
+      expect(control.dirty).toBe(false)
 
       control.updateDefaultState(undefined)
-      expect(control.defaultState.value).toBe(undefined)
-      expect(control.dirty.value).toBe(true)
+      expect(control.defaultState).toBe(undefined)
+      expect(control.dirty).toBe(true)
 
       control.reset()
-      expect(control.state.value).toBe(undefined)
-      expect(control.dirty.value).toBe(false)
+      expect(control.state).toBe(undefined)
+      expect(control.dirty).toBe(false)
     })
 
     describe("validation properties for array paths", () => {
@@ -715,13 +715,13 @@ describe("createInputControl", () => {
 
         // First item should be valid
         const firstItemControl = createInputControl(context, [0])
-        expect(firstItemControl.isValid.value).toBe(true)
-        expect(firstItemControl.errorMessages.value).toEqual([])
+        expect(firstItemControl.isValid).toBe(true)
+        expect(firstItemControl.errorMessages).toEqual([])
 
         // Second item should be invalid
         const secondItemControl = createInputControl(context, [1])
-        expect(secondItemControl.isValid.value).toBe(false)
-        expect(secondItemControl.errorMessages.value).toEqual([
+        expect(secondItemControl.isValid).toBe(false)
+        expect(secondItemControl.errorMessages).toEqual([
           "Item at index 1 is invalid"
         ])
       })
@@ -751,20 +751,20 @@ describe("createInputControl", () => {
 
         // First item's name should be invalid
         const firstNameControl = createInputControl(context, [0, "name"])
-        expect(firstNameControl.isValid.value).toBe(false)
-        expect(firstNameControl.errorMessages.value).toEqual([
+        expect(firstNameControl.isValid).toBe(false)
+        expect(firstNameControl.errorMessages).toEqual([
           "Name at index 0 is required"
         ])
 
         // First item's age should be valid
         const firstAgeControl = createInputControl(context, [0, "age"])
-        expect(firstAgeControl.isValid.value).toBe(true)
-        expect(firstAgeControl.errorMessages.value).toEqual([])
+        expect(firstAgeControl.isValid).toBe(true)
+        expect(firstAgeControl.errorMessages).toEqual([])
 
         // Second item's age should be invalid
         const secondAgeControl = createInputControl(context, [1, "age"])
-        expect(secondAgeControl.isValid.value).toBe(false)
-        expect(secondAgeControl.errorMessages.value).toEqual([
+        expect(secondAgeControl.isValid).toBe(false)
+        expect(secondAgeControl.errorMessages).toEqual([
           "Age at index 1 must be positive"
         ])
       })
@@ -774,24 +774,24 @@ describe("createInputControl", () => {
         const { errors } = context
         const middleItemControl = createInputControl(context, [1])
 
-        expect(middleItemControl.isValid.value).toBe(true)
-        expect(middleItemControl.errorMessages.value).toEqual([])
+        expect(middleItemControl.isValid).toBe(true)
+        expect(middleItemControl.errorMessages).toEqual([])
 
         // Add error for middle item
         errors.value = {
           "1": [{ message: "Middle item is invalid", path: [1] }]
         }
 
-        expect(middleItemControl.isValid.value).toBe(false)
-        expect(middleItemControl.errorMessages.value).toEqual([
+        expect(middleItemControl.isValid).toBe(false)
+        expect(middleItemControl.errorMessages).toEqual([
           "Middle item is invalid"
         ])
 
         // Clear errors
         errors.value = {}
 
-        expect(middleItemControl.isValid.value).toBe(true)
-        expect(middleItemControl.errorMessages.value).toEqual([])
+        expect(middleItemControl.isValid).toBe(true)
+        expect(middleItemControl.errorMessages).toEqual([])
       })
 
       it("should handle multiple errors on the same array item", () => {
@@ -813,8 +813,8 @@ describe("createInputControl", () => {
         }
 
         const nameControl = createInputControl(context, [0, "name"])
-        expect(nameControl.isValid.value).toBe(false)
-        expect(nameControl.errorMessages.value).toEqual([
+        expect(nameControl.isValid).toBe(false)
+        expect(nameControl.errorMessages).toEqual([
           "Name is required",
           "Name must be at least 2 characters"
         ])
@@ -827,8 +827,8 @@ describe("createInputControl", () => {
         const firstControl = createInputControl(context, [0])
         const secondControl = createInputControl(context, [1])
 
-        expect(firstControl.touched.value).toBe(false)
-        expect(secondControl.touched.value).toBe(false)
+        expect(firstControl.touched).toBe(false)
+        expect(secondControl.touched).toBe(false)
       })
 
       it("should touch only the specific array element", () => {
@@ -838,8 +838,8 @@ describe("createInputControl", () => {
 
         firstControl.setAsTouched()
 
-        expect(firstControl.touched.value).toBe(true)
-        expect(secondControl.touched.value).toBe(false)
+        expect(firstControl.touched).toBe(true)
+        expect(secondControl.touched).toBe(false)
       })
 
       it("should handle touched state for objects within arrays", () => {
@@ -853,9 +853,9 @@ describe("createInputControl", () => {
 
         firstNameControl.setAsTouched()
 
-        expect(firstNameControl.touched.value).toBe(true)
-        expect(secondNameControl.touched.value).toBe(false)
-        expect(firstAgeControl.touched.value).toBe(false)
+        expect(firstNameControl.touched).toBe(true)
+        expect(secondNameControl.touched).toBe(false)
+        expect(firstAgeControl.touched).toBe(false)
       })
 
       it("should remain touched after state changes on array element", () => {
@@ -863,9 +863,9 @@ describe("createInputControl", () => {
         const firstControl = createInputControl(context, [0])
 
         firstControl.setAsTouched()
-        firstControl.state.value = 10
+        firstControl.state = 10
 
-        expect(firstControl.touched.value).toBe(true)
+        expect(firstControl.touched).toBe(true)
       })
 
       it("should remain touched after reset on array element", () => {
@@ -873,11 +873,11 @@ describe("createInputControl", () => {
         const firstControl = createInputControl(context, [0])
 
         firstControl.setAsTouched()
-        firstControl.state.value = 10
+        firstControl.state = 10
         firstControl.reset()
 
-        expect(firstControl.touched.value).toBe(true)
-        expect(firstControl.state.value).toBe(1)
+        expect(firstControl.touched).toBe(true)
+        expect(firstControl.state).toBe(1)
       })
     })
   })

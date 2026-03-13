@@ -1,4 +1,3 @@
-import type { ComputedRef, Ref } from "@vue/reactivity"
 import type { PartialOrPrimitive } from "./utils"
 
 /**
@@ -7,18 +6,19 @@ import type { PartialOrPrimitive } from "./utils"
  * Allows access to the state management for the node, and metadata describing its status.
  */
 export type InputControl<T> = {
-  state: Ref<PartialOrPrimitive<T> | undefined>
-  defaultState: ComputedRef<PartialOrPrimitive<T> | undefined>
-  dirty: ComputedRef<boolean>
-  touched: ComputedRef<boolean>
+  state: PartialOrPrimitive<T> | undefined
+  // Updating the default value should be discouraged, so it's exposed as a read-only property
+  readonly defaultState: PartialOrPrimitive<T> | undefined
+  readonly dirty: boolean
+  readonly touched: boolean
   /**
    * When true it means that the current state is different from the default state.
    */
-  isValid: ComputedRef<boolean>
+  readonly isValid: boolean
   /**
    * Error messages from the validation outcome.
    */
-  errorMessages: ComputedRef<string[]>
+  readonly errorMessages: string[]
   /**
    * Sets the state to undefined.
    */

@@ -1,4 +1,3 @@
-import { computed } from "@vue/reactivity"
 import { isEqual, isObject, type PropertyPath } from "lodash-es"
 import { deepPick } from "./utils"
 import type { InputControl } from "./types/controls"
@@ -31,55 +30,46 @@ export const createInputControl = <TState>(
     isFieldTouched,
     setFieldAsTouched
   } = context
-  // Updating the default value should be discouraged, so it's exposed as a read-only computed
-  const defaultState = computed(() => getFieldState(path, "default"))
-  const state = computed({
-    get() {
-      return getFieldState(path, "current")
-    },
-    set(value: TState) {
-      setFieldState(path, value, "current")
-    }
-  })
-
-  const dirty = computed(() => isDirty(state.value, defaultState.value))
-
-  const touched = computed(() => isFieldTouched(path))
-
-  const isValid = computed(() => {
-    const issues = getFieldErrors(path)
-    return issues.length === 0
-  })
-
-  const errorMessages = computed<string[]>(() => {
-    const issues = getFieldErrors(path)
-    return issues.map((issue) => issue.message)
-  })
-
-  const clear = () => {
-    setFieldState(path, undefined, "current")
-  }
-  const reset = () => {
-    state.value = defaultState.value
-  }
-  const updateDefaultState = (newDefaultState?: PartialOrPrimitive<TState>) => {
-    setFieldState(path, newDefaultState, "default")
-  }
-
-  const setAsTouched = () => {
-    setFieldAsTouched(path)
-  }
 
   return {
-    defaultState,
-    state,
-    dirty,
-    touched,
-    isValid,
-    errorMessages,
-    clear,
-    reset,
-    updateDefaultState,
-    setAsTouched
+    get state() {
+      return getFieldState(path, "current")
+    },
+    set state(value: PartialOrPrimitive<TState> | undefined) {
+      setFieldState(path, value, "current")
+    },
+
+    get defaultState() {
+      return getFieldState(path, "default")
+    },
+    get dirty() {
+      return isDirty(
+        getFieldState(path, "current"),
+        getFieldState(path, "default")
+      )
+    },
+    get touched() {
+      return isFieldTouched(path)
+    },
+    get isValid() {
+      const issues = getFieldErrors(path)
+      return issues.length === 0
+    },
+    get errorMessages() {
+      const issues = getFieldErrors(path)
+      return issues.map((issue) => issue.message)
+    },
+    clear() {
+      setFieldState(path, undefined, "current")
+    },
+    reset() {
+      setFieldState(path, getFieldState(path, "default"), "current")
+    },
+    updateDefaultState(newDefaultState?: PartialOrPrimitive<TState>) {
+      setFieldState(path, newDefaultState, "default")
+    },
+    setAsTouched() {
+      setFieldAsTouched(path)
+    }
   }
 }
