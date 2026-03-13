@@ -131,6 +131,8 @@ form.name.$control.errorMessages // string[] of error messages
 The `$control` is available at **every level** of the form tree - from the root, through nested objects, down to individual array elements.
 
 > **⚠️ Important Reactivity Rule:** Do not destructure the `$control` object (e.g., `const { state } = form.name.$control`). Because `$control` properties are implemented using Vue's reactive getters under the hood, destructuring will break reactivity and capture static values at the moment of destructuring. Always access properties directly on the `$control` reference.
+>
+> If you really need to destructure the control object, you can do so by using Vue's `toRefs` utility to maintain reactivity: `const { state, isValid } = toRefs(form.name.$control)`.
 
 ## Form State
 
