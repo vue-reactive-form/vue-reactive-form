@@ -1,6 +1,18 @@
 import type { PartialOrPrimitive } from "./utils"
 
 /**
+ * Props meant to be bound to the input component with v-bind.
+ * Includes modelValue + onUpdate:modelValue for two-way binding,
+ * onFocus (marks as touched), and onBlur (triggers validation when validateOn is "blur").
+ */
+export type FieldProps<T> = {
+  readonly modelValue: PartialOrPrimitive<T> | undefined
+  readonly "onUpdate:modelValue": (value: PartialOrPrimitive<T> | undefined) => void
+  readonly onFocus: () => void
+  readonly onBlur: () => void
+}
+
+/**
  * Control of a node inside a form, with the give type.
  *
  * Allows access to the state management for the node, and metadata describing its status.
@@ -38,17 +50,7 @@ export type InputControl<T> = {
    * Sets the touched state to true.
    */
   setAsTouched: () => void
-  /**
-   * Props meant to be bound to the input component with v-bind.
-   * Includes modelValue + onUpdate:modelValue for two-way binding,
-   * onFocus (marks as touched), and onBlur (triggers validation when validateOn is "blur").
-   */
-  readonly fieldProps: {
-    readonly modelValue: PartialOrPrimitive<T> | undefined
-    readonly "onUpdate:modelValue": (value: PartialOrPrimitive<T> | undefined) => void
-    readonly onFocus: () => void
-    readonly onBlur: () => void
-  }
+  readonly fieldProps: FieldProps<T>
 }
 
 /**

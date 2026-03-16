@@ -69,9 +69,7 @@ export const createInputControl = <TState>(
     },
     get fieldProps() {
       return {
-        get modelValue() {
-          return control.state
-        },
+        modelValue: control.state,
         "onUpdate:modelValue": (
           value: PartialOrPrimitive<TState> | undefined
         ) => {

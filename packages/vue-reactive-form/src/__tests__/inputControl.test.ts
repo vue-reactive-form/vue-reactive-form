@@ -1,4 +1,5 @@
-import { describe, it, expect, vi } from "vitest"
+import { describe, it, expect } from "vitest"
+import * as yup from "yup"
 import { createInputControl } from "../inputControl"
 import { useFormContext } from "../useFormContext"
 
@@ -242,139 +243,150 @@ describe("createInputControl", () => {
   })
 
   describe("When validateOn is blur", () => {
-      it("should trigger validation when fieldProps.onBlur is called", async () => {
-        const context = useFormContext({ name: "" }, {
-          validationSchema: { "~standard": { version: 1, vendor: "test", validate: () => ({ issues: [{ message: "Required", path: ["name"] }] }) } } as any,
+    it("should trigger validation when fieldProps.onBlur is called", async () => {
+      const context = useFormContext(
+        { name: "" },
+        {
+          validationSchema: yup.object({
+            name: yup.string().required("Required")
+          }),
           validateOn: "blur"
-        })
-        const control = createInputControl(context, ["name"])
+        }
+      )
+      const control = createInputControl(context, ["name"])
 
-        // Focus marks as touched, blur triggers validation
-        control.fieldProps.onFocus()
-        control.fieldProps.onBlur()
+      // Focus marks as touched, blur triggers validation
+      control.fieldProps.onFocus()
+      control.fieldProps.onBlur()
 
-        // Wait for async validation
-        await new Promise((r) => setTimeout(r, 0))
+      // Wait for async validation
+      await new Promise((r) => setTimeout(r, 0))
 
-        expect(context.errors.value.name).toBeDefined()
-        expect(control.isValid).toBe(false)
-        expect(control.errorMessages).toEqual(["Required"])
-      })
-
-      it("should not trigger validation on blur when validateOn is submit", async () => {
-        const context = useFormContext({ name: "" }, {
-          validationSchema: { "~standard": { version: 1, vendor: "test", validate: () => ({ issues: [{ message: "Required", path: ["name"] }] }) } } as any,
-          validateOn: "submit"
-        })
-        const control = createInputControl(context, ["name"])
-
-        control.fieldProps.onBlur()
-
-        await new Promise((r) => setTimeout(r, 0))
-
-        // No validation should have run
-        expect(context.errors.value.name).toBeUndefined()
-      })
-
-      it("should only update errors for the blurred field", async () => {
-        const context = useFormContext({ name: "", age: 30 }, {
-          validationSchema: { "~standard": { version: 1, vendor: "test", validate: () => ({
-            issues: [
-              { message: "Name required", path: ["name"] },
-              { message: "Age invalid", path: ["age"] }
-            ]
-          }) } } as any,
-          validateOn: "blur"
-        })
-        const nameControl = createInputControl(context, ["name"])
-        const ageControl = createInputControl(context, ["age"])
-
-        // Blur only the name field
-        nameControl.fieldProps.onFocus()
-        nameControl.fieldProps.onBlur()
-        await new Promise((r) => setTimeout(r, 0))
-
-        // Name errors are written
-        expect(nameControl.isValid).toBe(false)
-        expect(nameControl.errorMessages).toEqual(["Name required"])
-
-        // Age errors are NOT written — it was never blurred
-        expect(ageControl.isValid).toBe(true)
-        expect(ageControl.errorMessages).toEqual([])
-      })
-
-      it("should set touched on focus via fieldProps", () => {
-        const context = useFormContext({ name: "John" })
-        const control = createInputControl(context, ["name"])
-
-        expect(control.touched).toBe(false)
-
-        control.fieldProps.onFocus()
-
-        expect(control.touched).toBe(true)
-      })
+      expect(context.errors.value.name).toBeDefined()
+      expect(control.isValid).toBe(false)
+      expect(control.errorMessages).toEqual(["Required"])
     })
+
+    it("should not trigger validation on blur when validateOn is submit", async () => {
+      const context = useFormContext(
+        { name: "" },
+        {
+          validationSchema: yup.object({
+            name: yup.string().required("Required")
+          }),
+          validateOn: "submit"
+        }
+      )
+      const control = createInputControl(context, ["name"])
+
+      control.fieldProps.onBlur()
+
+      await new Promise((r) => setTimeout(r, 0))
+
+      // No validation should have run
+      expect(context.errors.value.name).toBeUndefined()
+    })
+
+    it("should only update errors for the blurred field", async () => {
+      const context = useFormContext(
+        { name: "", age: 30 },
+        {
+          validationSchema: yup.object({
+            name: yup.string().required("Name required"),
+            age: yup.number().min(50, "Age invalid")
+          }),
+          validateOn: "blur"
+        }
+      )
+      const nameControl = createInputControl(context, ["name"])
+      const ageControl = createInputControl(context, ["age"])
+
+      // Blur only the name field
+      nameControl.fieldProps.onFocus()
+      nameControl.fieldProps.onBlur()
+      await new Promise((r) => setTimeout(r, 0))
+
+      // Name errors are written
+      expect(nameControl.isValid).toBe(false)
+      expect(nameControl.errorMessages).toEqual(["Name required"])
+
+      // Age errors are NOT written — it was never blurred
+      expect(ageControl.isValid).toBe(true)
+      expect(ageControl.errorMessages).toEqual([])
+    })
+
+    it("should set touched on focus via fieldProps", () => {
+      const context = useFormContext({ name: "John" })
+      const control = createInputControl(context, ["name"])
+
+      expect(control.touched).toBe(false)
+
+      control.fieldProps.onFocus()
+
+      expect(control.touched).toBe(true)
+    })
+  })
 
   describe("fieldProps model binding", () => {
-      it("should expose current state as modelValue", () => {
-        const context = useFormContext("hello")
-        const control = createInputControl(context)
+    it("should expose current state as modelValue", () => {
+      const context = useFormContext("hello")
+      const control = createInputControl(context)
 
-        expect(control.fieldProps.modelValue).toBe("hello")
-      })
-
-      it("should update state via onUpdate:modelValue", () => {
-        const context = useFormContext("hello")
-        const control = createInputControl(context)
-
-        control.fieldProps["onUpdate:modelValue"]("world")
-
-        expect(control.state).toBe("world")
-        expect(control.fieldProps.modelValue).toBe("world")
-      })
-
-      it("should reflect external state changes in modelValue", () => {
-        const context = useFormContext("initial")
-        const control = createInputControl(context)
-
-        control.state = "changed"
-
-        expect(control.fieldProps.modelValue).toBe("changed")
-      })
-
-      it("should work with nested object paths", () => {
-        const context = useFormContext({ user: { name: "John" } })
-        const control = createInputControl(context, ["user", "name"])
-
-        expect(control.fieldProps.modelValue).toBe("John")
-
-        control.fieldProps["onUpdate:modelValue"]("Jane")
-
-        expect(control.state).toBe("Jane")
-        expect(control.fieldProps.modelValue).toBe("Jane")
-      })
-
-      it("should mark field as dirty when updated via onUpdate:modelValue", () => {
-        const context = useFormContext("original")
-        const control = createInputControl(context)
-
-        expect(control.dirty).toBe(false)
-
-        control.fieldProps["onUpdate:modelValue"]("modified")
-
-        expect(control.dirty).toBe(true)
-      })
-
-      it("should handle undefined values", () => {
-        const context = useFormContext("hello")
-        const control = createInputControl(context)
-
-        control.fieldProps["onUpdate:modelValue"](undefined)
-
-        expect(control.state).toBe(undefined)
-        expect(control.fieldProps.modelValue).toBe(undefined)
-      })
+      expect(control.fieldProps.modelValue).toBe("hello")
     })
+
+    it("should update state via onUpdate:modelValue", () => {
+      const context = useFormContext("hello")
+      const control = createInputControl(context)
+
+      control.fieldProps["onUpdate:modelValue"]("world")
+
+      expect(control.state).toBe("world")
+      expect(control.fieldProps.modelValue).toBe("world")
+    })
+
+    it("should reflect external state changes in modelValue", () => {
+      const context = useFormContext("initial")
+      const control = createInputControl(context)
+
+      control.state = "changed"
+
+      expect(control.fieldProps.modelValue).toBe("changed")
+    })
+
+    it("should work with nested object paths", () => {
+      const context = useFormContext({ user: { name: "John" } })
+      const control = createInputControl(context, ["user", "name"])
+
+      expect(control.fieldProps.modelValue).toBe("John")
+
+      control.fieldProps["onUpdate:modelValue"]("Jane")
+
+      expect(control.state).toBe("Jane")
+      expect(control.fieldProps.modelValue).toBe("Jane")
+    })
+
+    it("should mark field as dirty when updated via onUpdate:modelValue", () => {
+      const context = useFormContext("original")
+      const control = createInputControl(context)
+
+      expect(control.dirty).toBe(false)
+
+      control.fieldProps["onUpdate:modelValue"]("modified")
+
+      expect(control.dirty).toBe(true)
+    })
+
+    it("should handle undefined values", () => {
+      const context = useFormContext("hello")
+      const control = createInputControl(context)
+
+      control.fieldProps["onUpdate:modelValue"](undefined)
+
+      expect(control.state).toBe(undefined)
+      expect(control.fieldProps.modelValue).toBe(undefined)
+    })
+  })
 
   describe("When state is an object", () => {
     it("should expose the correct initial state and defaultValue", () => {
@@ -555,9 +567,7 @@ describe("createInputControl", () => {
         ])
 
         expect(emailControl.isValid).toBe(false)
-        expect(emailControl.errorMessages).toEqual([
-          "Invalid email format"
-        ])
+        expect(emailControl.errorMessages).toEqual(["Invalid email format"])
 
         // Name field should be valid
         const nameControl = createInputControl(context, [

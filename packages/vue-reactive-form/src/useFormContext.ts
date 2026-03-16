@@ -6,8 +6,12 @@ import type {
   UseFormContextOptions
 } from "./types/useForm"
 import type { PartialOrPrimitive } from "./types/utils"
-import { cloneDeep, get, set, groupBy, type PropertyPath } from "lodash-es"
-import { standardValidate, type ValidationIssue } from "./validation"
+import { cloneDeep, get, set, type PropertyPath } from "lodash-es"
+import {
+  buildErrorsObject,
+  standardValidate,
+  type ValidationIssue
+} from "./validation"
 
 const getPathAsString = (path: PropertyPath) => {
   return Array.isArray(path) && path.length ? path.join(".") : ""
@@ -106,12 +110,6 @@ export const useFormContext = <TState, TValidatedState = TState>(
     return result
   }
 
-  const buildErrorsObject = (validationIssues: readonly ValidationIssue[]) =>
-    groupBy(
-      validationIssues,
-      (issue: ValidationIssue) => `${issue.path.join(".")}`
-    )
-
   const validate = async () => {
     const result = await runValidation()
 
@@ -122,6 +120,7 @@ export const useFormContext = <TState, TValidatedState = TState>(
 
     if (!result.success) {
       errors.value = buildErrorsObject(result.issues)
+      return
     } else {
       return result.output
     }
@@ -138,7 +137,7 @@ export const useFormContext = <TState, TValidatedState = TState>(
       const allErrors = buildErrorsObject(result.issues)
       errors.value[pathStr] = allErrors[pathStr] ?? []
     } else {
-      errors.value[pathStr] = []
+      delete errors.value[pathStr]
     }
   }
 

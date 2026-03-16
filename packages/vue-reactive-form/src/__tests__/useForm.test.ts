@@ -35,9 +35,7 @@ describe("useForm", () => {
       })
 
       expect(form.user.profile.name.$control.state).toBe("John")
-      expect(form.user.profile.email.$control.state).toBe(
-        "john@example.com"
-      )
+      expect(form.user.profile.email.$control.state).toBe("john@example.com")
     })
 
     it("should navigate to array properties", () => {
@@ -210,9 +208,7 @@ describe("useForm", () => {
       expect(form.id.$control.state).toBe(1)
       expect(form.active.$control.state).toBe(true)
       expect(form.user.metadata.tags[0]?.$control.state).toBe("admin")
-      expect(form.user.metadata.settings.theme.$control.state).toBe(
-        "dark"
-      )
+      expect(form.user.metadata.settings.theme.$control.state).toBe("dark")
       expect(form.scores[1]?.$control.state).toBe(92)
     })
   })
@@ -279,15 +275,11 @@ describe("useForm", () => {
 
       // Check name field validation
       expect(form.name.$control.isValid).toBe(false)
-      expect(form.name.$control.errorMessages).toEqual([
-        "Name is required"
-      ])
+      expect(form.name.$control.errorMessages).toEqual(["Name is required"])
 
       // Check age field validation
       expect(form.age.$control.isValid).toBe(false)
-      expect(form.age.$control.errorMessages).toEqual([
-        "Age must be positive"
-      ])
+      expect(form.age.$control.errorMessages).toEqual(["Age must be positive"])
     })
 
     it("should clear errors when validation succeeds", async () => {
@@ -631,8 +623,7 @@ describe("useForm", () => {
       expect(form.name.$control.touched).toBe(false)
       expect(form.email.$control.touched).toBe(false)
 
-      const onError = vi.fn()
-      const submit = handleSubmit({ onError })
+      const submit = handleSubmit()
       await submit()
 
       // After submit, all fields are touched — all errors visible
@@ -690,9 +681,7 @@ describe("useForm", () => {
       result = await validate()
       expect(result).toBeUndefined()
       expect(form.name.$control.isValid).toBe(false)
-      expect(form.name.$control.errorMessages).toEqual([
-        "Name is required"
-      ])
+      expect(form.name.$control.errorMessages).toEqual(["Name is required"])
     })
 
     it("should handle schema ref going from undefined to defined", async () => {
@@ -717,9 +706,7 @@ describe("useForm", () => {
       result = await validate()
       expect(result).toBeUndefined()
       expect(form.name.$control.isValid).toBe(false)
-      expect(form.name.$control.errorMessages).toEqual([
-        "Name is required"
-      ])
+      expect(form.name.$control.errorMessages).toEqual(["Name is required"])
     })
 
     it("should work with plain object schema (non-ref)", async () => {
@@ -735,9 +722,7 @@ describe("useForm", () => {
       const result = await validate()
       expect(result).toBeUndefined()
       expect(form.name.$control.isValid).toBe(false)
-      expect(form.name.$control.errorMessages).toEqual([
-        "Name is required"
-      ])
+      expect(form.name.$control.errorMessages).toEqual(["Name is required"])
     })
 
     it("should validate against different schema types after update", async () => {

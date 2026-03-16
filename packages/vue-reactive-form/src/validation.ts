@@ -1,5 +1,7 @@
 import type { StandardSchemaV1 } from "@standard-schema/spec"
 import type { PartialOrPrimitive } from "./types/utils"
+import { groupBy } from "lodash-es"
+import type { FormErrors } from "./types/useForm"
 
 export type ValidationIssue = Omit<StandardSchemaV1.Issue, "path"> & {
   path: readonly (string | number | symbol)[]
@@ -46,3 +48,11 @@ export async function standardValidate<
     output: result.value
   }
 }
+
+export const buildErrorsObject = (
+  validationIssues: readonly ValidationIssue[]
+): FormErrors =>
+  groupBy(
+    validationIssues,
+    (issue: ValidationIssue) => `${issue.path.join(".")}`
+  )
