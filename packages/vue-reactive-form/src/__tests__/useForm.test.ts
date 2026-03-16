@@ -584,9 +584,7 @@ describe("useForm", () => {
 
       // Focus then blur the name field
       form.name.$control.fieldProps.onFocus()
-      form.name.$control.fieldProps.onBlur()
-
-      await new Promise((r) => setTimeout(r, 0))
+      await form.name.$control.fieldProps.onBlur()
 
       // Only the blurred field's errors should be written
       expect(errors.value.name).toBeDefined()
@@ -601,8 +599,7 @@ describe("useForm", () => {
 
       // Focus + blur only the name field
       form.name.$control.fieldProps.onFocus()
-      form.name.$control.fieldProps.onBlur()
-      await new Promise((r) => setTimeout(r, 0))
+      await form.name.$control.fieldProps.onBlur()
 
       // Name field is touched — errors visible
       expect(form.name.$control.isValid).toBe(false)
@@ -641,8 +638,7 @@ describe("useForm", () => {
 
       // Focus + blur email (valid), which triggers validation
       form.email.$control.fieldProps.onFocus()
-      form.email.$control.fieldProps.onBlur()
-      await new Promise((r) => setTimeout(r, 0))
+      await form.email.$control.fieldProps.onBlur()
 
       // Email is touched and valid
       expect(form.email.$control.isValid).toBe(true)

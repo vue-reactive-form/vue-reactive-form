@@ -78,7 +78,7 @@ export const createInputControl = <TState>(
         onFocus: () => control.setAsTouched(),
         onBlur: () => {
           if (validateOn === "blur") {
-            validateField(path)
+            return validateField(path)
           }
         }
       }

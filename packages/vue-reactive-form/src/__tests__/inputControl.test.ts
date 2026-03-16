@@ -257,10 +257,7 @@ describe("createInputControl", () => {
 
       // Focus marks as touched, blur triggers validation
       control.fieldProps.onFocus()
-      control.fieldProps.onBlur()
-
-      // Wait for async validation
-      await new Promise((r) => setTimeout(r, 0))
+      await control.fieldProps.onBlur()
 
       expect(context.errors.value.name).toBeDefined()
       expect(control.isValid).toBe(false)
@@ -279,9 +276,7 @@ describe("createInputControl", () => {
       )
       const control = createInputControl(context, ["name"])
 
-      control.fieldProps.onBlur()
-
-      await new Promise((r) => setTimeout(r, 0))
+      await control.fieldProps.onBlur()
 
       // No validation should have run
       expect(context.errors.value.name).toBeUndefined()
@@ -303,8 +298,7 @@ describe("createInputControl", () => {
 
       // Blur only the name field
       nameControl.fieldProps.onFocus()
-      nameControl.fieldProps.onBlur()
-      await new Promise((r) => setTimeout(r, 0))
+      await nameControl.fieldProps.onBlur()
 
       // Name errors are written
       expect(nameControl.isValid).toBe(false)
