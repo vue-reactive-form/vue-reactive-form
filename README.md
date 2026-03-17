@@ -14,52 +14,61 @@ Check out the [live demo](https://vue-reactive-form.github.io/vue-reactive-form/
 - **Headless & UI agnostic** - Core form logic and state management without enforcing any UI components or styles. Works with any UI library or custom design system
 - **Reactive validation schema** - Pass a `ref` as your validation schema and swap validation rules dynamically at runtime
 - **Proxy-based tree navigation** - Access any field's control at any depth via dot-path notation (`form.user.profile.name.$control`), no string paths needed
+- **Validate on blur** - Opt into field-level validation triggered on blur, or call `validate()` on any individual field's control
+- **Zero-boilerplate bindings** - Use `v-bind="form.name.$control.field"` to wire up `v-model`, touched tracking, and blur validation in one shot
 
 ## Table of Contents
 
-- [Installation](#installation)
-- [Getting Started](#getting-started)
-  - [Understanding the `$control` Pattern](#understanding-the-control-pattern)
-- [Form State](#form-state)
-  - [Primitive Root State](#primitive-root-state)
-  - [Object State](#object-state)
-  - [Nested Objects](#nested-objects)
-  - [Arrays](#arrays)
-  - [Iterating Over Arrays](#iterating-over-arrays)
-- [Validation](#validation)
-  - [Standard Schema Support](#standard-schema-support)
-  - [Reactive Validation Schema](#reactive-validation-schema)
-  - [Handling Validation Errors](#handling-validation-errors)
-- [Submitting](#submitting)
-- [API](#api)
-  - [`useForm(defaultState, options?)`](#useformdefaultstate-options)
-  - [`FormRoot`](#formroot)
-    - [`FormRoot.form`](#formrootform)
-    - [`FormRoot.errors`](#formrooterrors)
-    - [`FormRoot.validate()`](#formrootvalidate)
-    - [`FormRoot.handleSubmit(options?)`](#formroothandlesubmitoptions)
-  - [`FormNode`](#formnode)
-  - [`InputControl`](#inputcontrol)
-    - [`InputControl.state`](#inputcontrolstate)
-    - [`InputControl.defaultState`](#inputcontroldefaultstate)
-    - [`InputControl.dirty`](#inputcontroldirty)
-    - [`InputControl.touched`](#inputcontroltouched)
-    - [`InputControl.isValid`](#inputcontrolisvalid)
-    - [`InputControl.errorMessages`](#inputcontrolerrormessages)
-    - [`InputControl.clear()`](#inputcontrolclear)
-    - [`InputControl.reset()`](#inputcontrolreset)
-    - [`InputControl.updateDefaultState(newDefault?)`](#inputcontrolupdatedefaultstatenewdefault)
-    - [`InputControl.setAsTouched()`](#inputcontrolsetastouched)
-  - [`ArrayInputControl`](#arrayinputcontrol)
-    - [`ArrayInputControl.add(defaultValue?)`](#arrayinputcontroladddefaultvalue)
-    - [`ArrayInputControl.remove(index)`](#arrayinputcontrolremoveindex)
-    - [`ArrayInputControl.moveItem(fromIndex, toIndex)`](#arrayinputcontrolmoveitemfromindex-toindex)
-- [TypeScript](#typescript)
-  - [Typed Forms](#typed-forms)
-  - [Separate Input and Output Types](#separate-input-and-output-types)
-  - [Exported Types](#exported-types)
-- [Contributing](#contributing)
-- [License](#license)
+- [vue-reactive-form](#vue-reactive-form)
+  - [Table of Contents](#table-of-contents)
+  - [Installation](#installation)
+  - [Getting Started](#getting-started)
+    - [Understanding the `$control` Pattern](#understanding-the-control-pattern)
+  - [Form State](#form-state)
+    - [Primitive Root State](#primitive-root-state)
+    - [Object State](#object-state)
+    - [Nested Objects](#nested-objects)
+    - [Arrays](#arrays)
+    - [Iterating Over Arrays](#iterating-over-arrays)
+  - [Validation](#validation)
+    - [Standard Schema Support](#standard-schema-support)
+    - [Reactive Validation Schema](#reactive-validation-schema)
+    - [Validate on Blur](#validate-on-blur)
+    - [Field-Level Validation](#field-level-validation)
+    - [Handling Validation Errors](#handling-validation-errors)
+  - [Submitting](#submitting)
+  - [API](#api)
+    - [`useForm(defaultState, options?)`](#useformdefaultstate-options)
+    - [`FormRoot`](#formroot)
+      - [`FormRoot.form`](#formrootform)
+      - [`FormRoot.errors`](#formrooterrors)
+      - [`FormRoot.validate()`](#formrootvalidate)
+      - [`FormRoot.handleSubmit(options?)`](#formroothandlesubmitoptions)
+    - [`FormNode`](#formnode)
+    - [`InputControl`](#inputcontrol)
+      - [`InputControl.state`](#inputcontrolstate)
+      - [`InputControl.defaultState`](#inputcontroldefaultstate)
+      - [`InputControl.dirty`](#inputcontroldirty)
+      - [`InputControl.touched`](#inputcontroltouched)
+      - [`InputControl.isValid`](#inputcontrolisvalid)
+      - [`InputControl.errorMessages`](#inputcontrolerrormessages)
+      - [`InputControl.clear()`](#inputcontrolclear)
+      - [`InputControl.reset()`](#inputcontrolreset)
+      - [`InputControl.updateDefaultState(newDefault?)`](#inputcontrolupdatedefaultstatenewdefault)
+      - [`InputControl.setAsTouched()`](#inputcontrolsetastouched)
+      - [`InputControl.validate()`](#inputcontrolvalidate)
+      - [`InputControl.field`](#inputcontrolfield)
+    - [`FieldProps`](#fieldprops)
+    - [`ArrayInputControl`](#arrayinputcontrol)
+      - [`ArrayInputControl.add(defaultValue?)`](#arrayinputcontroladddefaultvalue)
+      - [`ArrayInputControl.remove(index)`](#arrayinputcontrolremoveindex)
+      - [`ArrayInputControl.moveItem(fromIndex, toIndex)`](#arrayinputcontrolmoveitemfromindex-toindex)
+  - [TypeScript](#typescript)
+    - [Typed Forms](#typed-forms)
+    - [Separate Input and Output Types](#separate-input-and-output-types)
+    - [Exported Types](#exported-types)
+  - [Contributing](#contributing)
+  - [License](#license)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -234,7 +243,7 @@ Array form nodes are iterable, so you can loop over them in templates or scripts
 ```vue
 <template>
   <div v-for="(member, index) in form.teamMembers" :key="index">
-    <input v-model="member.name.$control.state" />
+    <input v-bind="member.name.$control.field" />
     <button @click="form.teamMembers.$control.remove(index)">Remove</button>
   </div>
   <button @click="form.teamMembers.$control.add()">Add Member</button>
@@ -280,16 +289,16 @@ const onSubmit = handleSubmit({
   <form @submit.prevent="onSubmit">
     <div>
       <label>Name</label>
-      <input v-model="form.name.$control.state" type="text" />
-      <span v-if="!form.name.$control.isValid">
+      <input v-bind="form.name.$control.field" type="text" />
+      <span v-if="form.name.$control.touched && !form.name.$control.isValid">
         {{ form.name.$control.errorMessages.join(", ") }}
       </span>
     </div>
 
     <div>
       <label>Email</label>
-      <input v-model="form.email.$control.state" type="email" />
-      <span v-if="!form.email.$control.isValid">
+      <input v-bind="form.email.$control.field" type="email" />
+      <span v-if="form.email.$control.touched && !form.email.$control.isValid">
         {{ form.email.$control.errorMessages.join(", ") }}
       </span>
     </div>
@@ -341,6 +350,78 @@ await validate() // ✅ Returns state as-is (no schema = no validation)
 schemaRef.value = yup.object({ name: yup.string().required("Required") })
 await validate() // ❌ Now validates against the schema
 ```
+
+### Validate on Blur
+
+By default, validation only runs on submit. Set `validateOn: "blur"` to also validate individual fields when they lose focus. This works automatically when using the [`field`](#inputcontrolfield) binding:
+
+```vue
+<script setup lang="ts">
+import { useForm } from "@vue-reactive-form/core"
+import { object, string } from "yup"
+
+const schema = object({
+  name: string().required("Name is required"),
+  email: string().email("Invalid email").required("Email is required")
+})
+
+const { form, handleSubmit } = useForm(
+  { name: "", email: "" },
+  { validationSchema: schema, validateOn: "blur" }
+)
+
+const onSubmit = handleSubmit({
+  onSuccess: (data) => console.log("Valid:", data)
+})
+</script>
+
+<template>
+  <form @submit.prevent="onSubmit">
+    <div>
+      <label>Name</label>
+      <!-- v-bind="field" wires up v-model, onFocus (touched), and onBlur (validation) -->
+      <input v-bind="form.name.$control.field" type="text" />
+      <span v-if="form.name.$control.touched && !form.name.$control.isValid">
+        {{ form.name.$control.errorMessages.join(", ") }}
+      </span>
+    </div>
+
+    <div>
+      <label>Email</label>
+      <input v-bind="form.email.$control.field" type="email" />
+      <span v-if="form.email.$control.touched && !form.email.$control.isValid">
+        {{ form.email.$control.errorMessages.join(", ") }}
+      </span>
+    </div>
+
+    <button type="submit">Submit</button>
+  </form>
+</template>
+```
+
+When `validateOn` is `"blur"`, only the errors for the blurred field are updated — other fields' errors remain untouched until they are blurred or the form is submitted.
+
+### Field-Level Validation
+
+You can trigger validation for a single field imperatively using `validate()` on its control:
+
+```ts
+const { form } = useForm(
+  { name: "", email: "" },
+  { validationSchema: schema }
+)
+
+// Validate only the name field
+await form.name.$control.validate()
+
+form.name.$control.isValid // false
+form.name.$control.errorMessages // ["Name is required"]
+
+// The email field's errors are unaffected
+form.email.$control.errorMessages // [] (unchanged)
+```
+
+> **Note:** Field-level validation runs the full schema against the entire form state, but only updates the errors for the targeted field's path. This means every call pays the cost of a full schema validation. For forms with expensive schemas (e.g. async checks or very large objects), prefer `validateOn: "submit"` or keep your schema lightweight.
 
 ### Handling Validation Errors
 
@@ -441,6 +522,7 @@ const { form, errors, validate, handleSubmit } = useForm(defaultState, options)
 | Option             | Type                                      | Description                                                                                                  |
 | ------------------ | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | `validationSchema` | `MaybeRef<StandardSchemaV1 \| undefined>` | A Standard Schema–compatible validation schema. Can be a plain value or a `Ref` for dynamic schema swapping. |
+| `validateOn`       | `"submit" \| "blur"`                      | When validation is triggered. `"submit"` (default) validates only on submit. `"blur"` also validates each field when it loses focus. |
 
 ---
 
@@ -568,6 +650,8 @@ type InputControl<T> = {
   reset: () => void
   updateDefaultState: (newDefault?: PartialOrPrimitive<T>) => void
   setAsTouched: () => void
+  validate: () => Promise<void>
+  readonly field: FieldProps<T>
 }
 ```
 
@@ -667,14 +751,70 @@ form.name.$control.defaultState // "New Default"
 
 #### `InputControl.setAsTouched()`
 
-Marks the field as touched. Typically called on blur events to track user interaction.
+Marks the field as touched. Typically called on focus or blur events to track user interaction. When using the [`field`](#inputcontrolfield) binding, this is called automatically on focus.
 
 ```html
 <input
   v-model="form.name.$control.state"
-  @blur="form.name.$control.setAsTouched()"
+  @focus="form.name.$control.setAsTouched()"
 />
 ```
+
+#### `InputControl.validate()`
+
+Triggers validation for this specific field. Only the errors relevant to this field's path are updated — other fields' errors remain unchanged.
+
+> **Performance note:** Under the hood, this executes the entire validation schema against the full form state. Each call carries the cost of a full validation pass. Keep this in mind when using `validateOn: "blur"` with expensive or async schemas.
+
+```ts
+await form.name.$control.validate()
+
+form.name.$control.isValid // false
+form.name.$control.errorMessages // ["Name is required"]
+```
+
+#### `InputControl.field`
+
+A read-only object containing props suitable for binding to an input component with `v-bind`. Provides two-way binding via `modelValue` / `onUpdate:modelValue`, marks the field as touched on focus, and triggers validation on blur when `validateOn` is `"blur"`.
+
+```html
+<!-- Instead of wiring up v-model, @focus, and @blur individually: -->
+<input v-bind="form.name.$control.field" type="text" />
+```
+
+This is equivalent to:
+
+```html
+<input
+  v-model="form.name.$control.state"
+  @focus="form.name.$control.setAsTouched()"
+  @blur="form.name.$control.validate()" <!-- only when validateOn is "blur" -->
+/>
+```
+
+See [`FieldProps`](#fieldprops) for the type definition.
+
+---
+
+### `FieldProps`
+
+The type returned by `InputControl.field`. Contains the props needed to bind a form field to an input component.
+
+```ts
+type FieldProps<T> = {
+  readonly modelValue: PartialOrPrimitive<T> | undefined
+  readonly "onUpdate:modelValue": (value: PartialOrPrimitive<T> | undefined) => void
+  readonly onFocus: () => void
+  readonly onBlur: () => void
+}
+```
+
+| Prop                  | Description                                                                                  |
+| --------------------- | -------------------------------------------------------------------------------------------- |
+| `modelValue`          | The current field value (read-only from the binding's perspective).                          |
+| `onUpdate:modelValue` | Updates the field's state — together with `modelValue`, this enables `v-model` via `v-bind`. |
+| `onFocus`             | Marks the field as touched.                                                                  |
+| `onBlur`              | Triggers field-level validation when `validateOn` is `"blur"`.                               |
 
 ---
 
@@ -793,6 +933,7 @@ import type {
   // Controls
   InputControl,
   ArrayInputControl,
+  FieldProps,
 
   // Form tree nodes
   FormNode,
