@@ -319,6 +319,70 @@ describe("createInputControl", () => {
     })
   })
 
+  describe("validate", () => {
+    it("should trigger validation for the field", async () => {
+      const context = useFormContext(
+        { name: "" },
+        {
+          validationSchema: yup.object({
+            name: yup.string().required("Required")
+          })
+        }
+      )
+      const control = createInputControl(context, ["name"])
+
+      expect(control.isValid).toBe(true)
+
+      await control.validate()
+
+      expect(control.isValid).toBe(false)
+      expect(control.errorMessages).toEqual(["Required"])
+    })
+
+    it("should only update errors for the validated field", async () => {
+      const context = useFormContext(
+        { name: "", age: 30 },
+        {
+          validationSchema: yup.object({
+            name: yup.string().required("Name required"),
+            age: yup.number().min(50, "Age invalid")
+          })
+        }
+      )
+      const nameControl = createInputControl(context, ["name"])
+      const ageControl = createInputControl(context, ["age"])
+
+      await nameControl.validate()
+
+      expect(nameControl.isValid).toBe(false)
+      expect(nameControl.errorMessages).toEqual(["Name required"])
+
+      expect(ageControl.isValid).toBe(true)
+      expect(ageControl.errorMessages).toEqual([])
+    })
+
+    it("should clear errors when validation passes after fix", async () => {
+      const context = useFormContext(
+        { name: "" },
+        {
+          validationSchema: yup.object({
+            name: yup.string().required("Required")
+          })
+        }
+      )
+      const control = createInputControl(context, ["name"])
+
+      await control.validate()
+      expect(control.isValid).toBe(false)
+
+      control.state = "valid"
+      await control.validate()
+
+      expect(control.isValid).toBe(true)
+      expect(control.errorMessages).toEqual([])
+    })
+  })
+
   describe("field model binding", () => {
     it("should expose current state as modelValue", () => {
       const context = useFormContext("hello")

@@ -50,6 +50,18 @@ export type InputControl<T> = {
    * Sets the touched state to true.
    */
   setAsTouched: () => void
+  /**
+   * Triggers validation for this field and updates only its errors.
+   *
+   * Note: this runs the validation schema against the entire form state,
+   * but only the errors relevant to this field's path are written.
+   */
+  validate: () => Promise<void>
+  /**
+   * Props meant to be bound to an input component via `v-bind`.
+   * Provides two-way binding (modelValue + onUpdate:modelValue),
+   * onFocus (marks the field as touched), and onBlur (triggers validation when validateOn is "blur").
+   */
   readonly field: FieldProps<T>
 }
 

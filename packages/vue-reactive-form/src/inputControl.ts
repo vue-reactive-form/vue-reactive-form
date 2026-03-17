@@ -67,6 +67,9 @@ export const createInputControl = <TState>(
     setAsTouched() {
       setFieldAsTouched(path)
     },
+    validate() {
+      return validateField(path)
+    },
     get field() {
       return {
         modelValue: control.state,
