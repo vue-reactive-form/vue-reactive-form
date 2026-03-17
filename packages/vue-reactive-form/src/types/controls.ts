@@ -50,7 +50,7 @@ export type InputControl<T> = {
    * Sets the touched state to true.
    */
   setAsTouched: () => void
-  readonly fieldProps: FieldProps<T>
+  readonly field: FieldProps<T>
 }
 
 /**

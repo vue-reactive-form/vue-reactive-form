@@ -67,7 +67,7 @@ export const createInputControl = <TState>(
     setAsTouched() {
       setFieldAsTouched(path)
     },
-    get fieldProps() {
+    get field() {
       return {
         modelValue: control.state,
         "onUpdate:modelValue": (

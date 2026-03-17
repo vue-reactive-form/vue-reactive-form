@@ -34,21 +34,21 @@ const onSubmit = handleSubmit({
 
           <LabeledInput
             label="Name"
-            v-bind="form.name.$control.fieldProps"
+            v-bind="form.name.$control.field"
             :errors="form.name.$control.errorMessages"
             type="text"
           />
 
           <LabeledInput
             label="Description"
-            v-bind="form.description.$control.fieldProps"
+            v-bind="form.description.$control.field"
             :errors="form.description.$control.errorMessages"
             type="text"
           />
 
           <LabeledInput
             label="Budget"
-            v-bind="form.budget.$control.fieldProps"
+            v-bind="form.budget.$control.field"
             :errors="form.budget.$control.errorMessages"
             type="number"
           />
@@ -64,8 +64,8 @@ const onSubmit = handleSubmit({
                       e.target as any
                     ).checked)
                 "
-                @focus="form.isPublic.$control.fieldProps.onFocus"
-                @blur="form.isPublic.$control.fieldProps.onBlur"
+                @focus="form.isPublic.$control.field.onFocus"
+                @blur="form.isPublic.$control.field.onBlur"
               />
               <span>Is public</span>
             </label>
@@ -85,21 +85,21 @@ const onSubmit = handleSubmit({
 
           <LabeledInput
             label="Client name"
-            v-bind="form.client.name.$control.fieldProps"
+            v-bind="form.client.name.$control.field"
             :errors="form.client.name.$control.errorMessages"
             type="text"
           />
 
           <LabeledInput
             label="Client street address"
-            v-bind="form.client.address.street.$control.fieldProps"
+            v-bind="form.client.address.street.$control.field"
             :errors="form.client.address.street.$control.errorMessages"
             type="text"
           />
 
           <LabeledInput
             label="Client city"
-            v-bind="form.client.address.city.$control.fieldProps"
+            v-bind="form.client.address.city.$control.field"
             :errors="form.client.address.city.$control.errorMessages"
             type="text"
           />
@@ -113,13 +113,13 @@ const onSubmit = handleSubmit({
               <div class="grid-col-2">
                 <LabeledInput
                   label="Name"
-                  v-bind="node.name.$control.fieldProps"
+                  v-bind="node.name.$control.field"
                   :errors="node.name.$control.errorMessages"
                   type="text"
                 />
                 <LabeledInput
                   label="Hourly rate"
-                  v-bind="node.hourlyRate.$control.fieldProps"
+                  v-bind="node.hourlyRate.$control.field"
                   :errors="node.hourlyRate.$control.errorMessages"
                   type="number"
                 />
@@ -136,7 +136,7 @@ const onSubmit = handleSubmit({
               <div class="grid-full">
                 <LabeledInput
                   label="Name"
-                  v-bind="node.$control.fieldProps"
+                  v-bind="node.$control.field"
                   :errors="node.$control.errorMessages"
                   type="text"
                 />

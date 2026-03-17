@@ -241,7 +241,7 @@ describe("createInputControl", () => {
   })
 
   describe("When validateOn is blur", () => {
-    it("should trigger validation when fieldProps.onBlur is called", async () => {
+    it("should trigger validation when field.onBlur is called", async () => {
       const context = useFormContext(
         { name: "" },
         {
@@ -254,8 +254,8 @@ describe("createInputControl", () => {
       const control = createInputControl(context, ["name"])
 
       // Focus marks as touched, blur triggers validation
-      control.fieldProps.onFocus()
-      await control.fieldProps.onBlur()
+      control.field.onFocus()
+      await control.field.onBlur()
 
       expect(context.errors.value.name).toBeDefined()
       expect(control.isValid).toBe(false)
@@ -274,7 +274,7 @@ describe("createInputControl", () => {
       )
       const control = createInputControl(context, ["name"])
 
-      await control.fieldProps.onBlur()
+      await control.field.onBlur()
 
       // No validation should have run
       expect(context.errors.value.name).toBeUndefined()
@@ -295,8 +295,8 @@ describe("createInputControl", () => {
       const ageControl = createInputControl(context, ["age"])
 
       // Blur only the name field
-      nameControl.fieldProps.onFocus()
-      await nameControl.fieldProps.onBlur()
+      nameControl.field.onFocus()
+      await nameControl.field.onBlur()
 
       // Name errors are written
       expect(nameControl.isValid).toBe(false)
@@ -307,34 +307,34 @@ describe("createInputControl", () => {
       expect(ageControl.errorMessages).toEqual([])
     })
 
-    it("should set touched on focus via fieldProps", () => {
+    it("should set touched on focus via field", () => {
       const context = useFormContext({ name: "John" })
       const control = createInputControl(context, ["name"])
 
       expect(control.touched).toBe(false)
 
-      control.fieldProps.onFocus()
+      control.field.onFocus()
 
       expect(control.touched).toBe(true)
     })
   })
 
-  describe("fieldProps model binding", () => {
+  describe("field model binding", () => {
     it("should expose current state as modelValue", () => {
       const context = useFormContext("hello")
       const control = createInputControl(context)
 
-      expect(control.fieldProps.modelValue).toBe("hello")
+      expect(control.field.modelValue).toBe("hello")
     })
 
     it("should update state via onUpdate:modelValue", () => {
       const context = useFormContext("hello")
       const control = createInputControl(context)
 
-      control.fieldProps["onUpdate:modelValue"]("world")
+      control.field["onUpdate:modelValue"]("world")
 
       expect(control.state).toBe("world")
-      expect(control.fieldProps.modelValue).toBe("world")
+      expect(control.field.modelValue).toBe("world")
     })
 
     it("should reflect external state changes in modelValue", () => {
@@ -343,19 +343,19 @@ describe("createInputControl", () => {
 
       control.state = "changed"
 
-      expect(control.fieldProps.modelValue).toBe("changed")
+      expect(control.field.modelValue).toBe("changed")
     })
 
     it("should work with nested object paths", () => {
       const context = useFormContext({ user: { name: "John" } })
       const control = createInputControl(context, ["user", "name"])
 
-      expect(control.fieldProps.modelValue).toBe("John")
+      expect(control.field.modelValue).toBe("John")
 
-      control.fieldProps["onUpdate:modelValue"]("Jane")
+      control.field["onUpdate:modelValue"]("Jane")
 
       expect(control.state).toBe("Jane")
-      expect(control.fieldProps.modelValue).toBe("Jane")
+      expect(control.field.modelValue).toBe("Jane")
     })
 
     it("should mark field as dirty when updated via onUpdate:modelValue", () => {
@@ -364,7 +364,7 @@ describe("createInputControl", () => {
 
       expect(control.dirty).toBe(false)
 
-      control.fieldProps["onUpdate:modelValue"]("modified")
+      control.field["onUpdate:modelValue"]("modified")
 
       expect(control.dirty).toBe(true)
     })
@@ -373,10 +373,10 @@ describe("createInputControl", () => {
       const context = useFormContext("hello")
       const control = createInputControl(context)
 
-      control.fieldProps["onUpdate:modelValue"](undefined)
+      control.field["onUpdate:modelValue"](undefined)
 
       expect(control.state).toBe(undefined)
-      expect(control.fieldProps.modelValue).toBe(undefined)
+      expect(control.field.modelValue).toBe(undefined)
     })
   })
 

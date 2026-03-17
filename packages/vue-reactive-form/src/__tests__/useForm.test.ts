@@ -602,8 +602,8 @@ describe("useForm", () => {
         )
 
         // Focus then blur the name field
-        form.name.$control.fieldProps.onFocus()
-        await form.name.$control.fieldProps.onBlur()
+        form.name.$control.field.onFocus()
+        await form.name.$control.field.onBlur()
 
         // Only the blurred field's errors should be written
         expect(errors.value.name).toBeDefined()
@@ -617,8 +617,8 @@ describe("useForm", () => {
         )
 
         // Focus + blur only the name field
-        form.name.$control.fieldProps.onFocus()
-        await form.name.$control.fieldProps.onBlur()
+        form.name.$control.field.onFocus()
+        await form.name.$control.field.onBlur()
 
         // Name field is touched — errors visible
         expect(form.name.$control.isValid).toBe(false)
@@ -656,8 +656,8 @@ describe("useForm", () => {
         )
 
         // Focus + blur email (valid), which triggers validation
-        form.email.$control.fieldProps.onFocus()
-        await form.email.$control.fieldProps.onBlur()
+        form.email.$control.field.onFocus()
+        await form.email.$control.field.onBlur()
 
         // Email is touched and valid
         expect(form.email.$control.isValid).toBe(true)
@@ -800,13 +800,13 @@ describe("useForm", () => {
       )
 
       // First blur triggers validation while name is empty
-      form.name.$control.fieldProps.onFocus()
-      const firstBlur = form.name.$control.fieldProps.onBlur()
+      form.name.$control.field.onFocus()
+      const firstBlur = form.name.$control.field.onBlur()
 
       // Before first resolves, fix value and blur again
       form.name.$control.state = "John"
-      form.name.$control.fieldProps.onFocus()
-      const secondBlur = form.name.$control.fieldProps.onBlur()
+      form.name.$control.field.onFocus()
+      const secondBlur = form.name.$control.field.onBlur()
 
       await firstBlur
       await secondBlur
