@@ -182,6 +182,26 @@ describe("createArrayInputControl", () => {
       expect(control.dirty).toBe(false)
     })
 
+    it("should not be dirty when mutations restore the original state", () => {
+      const context = useFormContext(["a", "b", "c"])
+
+      const control = createArrayInputControl(context)
+
+      // Add then remove — net effect is the original array
+      control.add("d")
+      expect(control.dirty).toBe(true)
+      control.remove(3)
+      expect(control.state).toEqual(["a", "b", "c"])
+      expect(control.dirty).toBe(false)
+
+      // Move forward then move back — net effect is the original array
+      control.moveItem(0, 2)
+      expect(control.dirty).toBe(true)
+      control.moveItem(2, 0)
+      expect(control.state).toEqual(["a", "b", "c"])
+      expect(control.dirty).toBe(false)
+    })
+
     it("should move objects in an array", () => {
       const context = useFormContext([
         { id: 1, name: "John" },
@@ -205,11 +225,10 @@ describe("createArrayInputControl", () => {
 
       const control = createArrayInputControl(context)
 
-      // Move with out-of-bounds indices should be clamped
-      control.moveItem(-1, 10) // Should clamp to valid indices
-      // The exact behavior depends on the implementation, but should not throw
-      expect(Array.isArray(control.state)).toBe(true)
-      expect(control.state?.length).toBe(3)
+      // -1 clamps to 0, 10 clamps to 2 — equivalent to moveItem(0, 2)
+      control.moveItem(-1, 10)
+      expect(control.state).toEqual(["b", "c", "a"])
+      expect(control.dirty).toBe(true)
     })
 
     it("should handle moving in a two-element array", () => {

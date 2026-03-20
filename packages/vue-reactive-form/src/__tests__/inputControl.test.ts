@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest"
+import * as yup from "yup"
 import { createInputControl } from "../inputControl"
 import { useFormContext } from "../useFormContext"
 
@@ -96,20 +97,15 @@ describe("createInputControl", () => {
         expect(control.errorMessages).toEqual([])
       })
 
-      it("should report isValid as false when there are errors", () => {
-        const context = useFormContext("invalid value")
-        const { errors } = context
-        errors.value = {
-          "": [
-            { message: "Value is required", path: [] },
-            {
-              message: "Value must be at least 3 characters",
-
-              path: []
-            }
-          ]
-        }
+      it("should report isValid as false when there are errors", async () => {
+        const schema = yup
+          .string()
+          .required("Value is required")
+          .min(3, "Value must be at least 3 characters")
+        const context = useFormContext("", { validationSchema: schema })
         const control = createInputControl(context)
+
+        await context.validate()
 
         expect(control.isValid).toBe(false)
         expect(control.errorMessages).toEqual([
@@ -118,39 +114,39 @@ describe("createInputControl", () => {
         ])
       })
 
-      it("should react to changes in the errors state", () => {
-        const context = useFormContext("some value")
-        const { errors } = context
+      it("should react to changes in the errors state", async () => {
+        const schema = yup.string().required("This field is invalid")
+        const context = useFormContext("", { validationSchema: schema })
         const control = createInputControl(context)
 
         expect(control.isValid).toBe(true)
         expect(control.errorMessages).toEqual([])
 
-        // Add errors - for root level control, errors are stored with empty string key
-        errors.value = {
-          "": [{ message: "This field is invalid", path: [] }]
-        }
+        // Validate — should fail
+        await context.validate()
 
         expect(control.isValid).toBe(false)
         expect(control.errorMessages).toEqual(["This field is invalid"])
 
-        // Clear errors
-        errors.value = {}
+        // Fix value and validate again — errors should clear
+        control.state = "valid"
+        await context.validate()
 
         expect(control.isValid).toBe(true)
         expect(control.errorMessages).toEqual([])
       })
 
-      it("should clear error messages when updating the state", () => {
-        const context = useFormContext("some value")
-        const { setFieldErrors } = context
+      it("should clear error messages when updating the state", async () => {
+        const schema = yup.string().required("Some error")
+        const context = useFormContext("", { validationSchema: schema })
         const control = createInputControl(context)
 
-        setFieldErrors([], [{ message: "Some error", path: [] }])
+        await context.validate()
 
         expect(control.isValid).toBe(false)
         expect(control.errorMessages).toEqual(["Some error"])
 
+        // Updating the state should clear errors without re-validating
         control.state = "new value"
 
         expect(control.isValid).toBe(true)
@@ -166,11 +162,14 @@ describe("createInputControl", () => {
         expect(control.errorMessages).toEqual([])
       })
 
-      it("should handle empty error arrays", () => {
-        const context = useFormContext("some value")
-        const { errors } = context
-        errors.value = { "": [] }
+      it("should report isValid as true after successful validation", async () => {
+        const schema = yup.string().required()
+        const context = useFormContext("valid value", {
+          validationSchema: schema
+        })
         const control = createInputControl(context)
+
+        await context.validate()
 
         expect(control.isValid).toBe(true)
         expect(control.errorMessages).toEqual([])
@@ -238,6 +237,210 @@ describe("createInputControl", () => {
 
         expect(control.touched).toBe(true)
       })
+    })
+  })
+
+  describe("When validateOn is blur", () => {
+    it("should trigger validation when field.onBlur is called", async () => {
+      const context = useFormContext(
+        { name: "" },
+        {
+          validationSchema: yup.object({
+            name: yup.string().required("Required")
+          }),
+          validateOn: "blur"
+        }
+      )
+      const control = createInputControl(context, ["name"])
+
+      // Focus marks as touched, blur triggers validation
+      control.field.onFocus()
+      await control.field.onBlur()
+
+      expect(context.errors.value.name).toBeDefined()
+      expect(control.isValid).toBe(false)
+      expect(control.errorMessages).toEqual(["Required"])
+    })
+
+    it("should not trigger validation on blur when validateOn is submit", async () => {
+      const context = useFormContext(
+        { name: "" },
+        {
+          validationSchema: yup.object({
+            name: yup.string().required("Required")
+          }),
+          validateOn: "submit"
+        }
+      )
+      const control = createInputControl(context, ["name"])
+
+      await control.field.onBlur()
+
+      // No validation should have run
+      expect(context.errors.value.name).toBeUndefined()
+    })
+
+    it("should only update errors for the blurred field", async () => {
+      const context = useFormContext(
+        { name: "", age: 30 },
+        {
+          validationSchema: yup.object({
+            name: yup.string().required("Name required"),
+            age: yup.number().min(50, "Age invalid")
+          }),
+          validateOn: "blur"
+        }
+      )
+      const nameControl = createInputControl(context, ["name"])
+      const ageControl = createInputControl(context, ["age"])
+
+      // Blur only the name field
+      nameControl.field.onFocus()
+      await nameControl.field.onBlur()
+
+      // Name errors are written
+      expect(nameControl.isValid).toBe(false)
+      expect(nameControl.errorMessages).toEqual(["Name required"])
+
+      // Age errors are NOT written — it was never blurred
+      expect(ageControl.isValid).toBe(true)
+      expect(ageControl.errorMessages).toEqual([])
+    })
+
+    it("should set touched on focus via field", () => {
+      const context = useFormContext({ name: "John" })
+      const control = createInputControl(context, ["name"])
+
+      expect(control.touched).toBe(false)
+
+      control.field.onFocus()
+
+      expect(control.touched).toBe(true)
+    })
+  })
+
+  describe("validate", () => {
+    it("should trigger validation for the field", async () => {
+      const context = useFormContext(
+        { name: "" },
+        {
+          validationSchema: yup.object({
+            name: yup.string().required("Required")
+          })
+        }
+      )
+      const control = createInputControl(context, ["name"])
+
+      expect(control.isValid).toBe(true)
+
+      await control.validate()
+
+      expect(control.isValid).toBe(false)
+      expect(control.errorMessages).toEqual(["Required"])
+    })
+
+    it("should only update errors for the validated field", async () => {
+      const context = useFormContext(
+        { name: "", age: 30 },
+        {
+          validationSchema: yup.object({
+            name: yup.string().required("Name required"),
+            age: yup.number().min(50, "Age invalid")
+          })
+        }
+      )
+      const nameControl = createInputControl(context, ["name"])
+      const ageControl = createInputControl(context, ["age"])
+
+      await nameControl.validate()
+
+      expect(nameControl.isValid).toBe(false)
+      expect(nameControl.errorMessages).toEqual(["Name required"])
+
+      expect(ageControl.isValid).toBe(true)
+      expect(ageControl.errorMessages).toEqual([])
+    })
+
+    it("should clear errors when validation passes after fix", async () => {
+      const context = useFormContext(
+        { name: "" },
+        {
+          validationSchema: yup.object({
+            name: yup.string().required("Required")
+          })
+        }
+      )
+      const control = createInputControl(context, ["name"])
+
+      await control.validate()
+      expect(control.isValid).toBe(false)
+
+      control.state = "valid"
+      await control.validate()
+
+      expect(control.isValid).toBe(true)
+      expect(control.errorMessages).toEqual([])
+    })
+  })
+
+  describe("field model binding", () => {
+    it("should expose current state as modelValue", () => {
+      const context = useFormContext("hello")
+      const control = createInputControl(context)
+
+      expect(control.field.modelValue).toBe("hello")
+    })
+
+    it("should update state via onUpdate:modelValue", () => {
+      const context = useFormContext("hello")
+      const control = createInputControl(context)
+
+      control.field["onUpdate:modelValue"]("world")
+
+      expect(control.state).toBe("world")
+      expect(control.field.modelValue).toBe("world")
+    })
+
+    it("should reflect external state changes in modelValue", () => {
+      const context = useFormContext("initial")
+      const control = createInputControl(context)
+
+      control.state = "changed"
+
+      expect(control.field.modelValue).toBe("changed")
+    })
+
+    it("should work with nested object paths", () => {
+      const context = useFormContext({ user: { name: "John" } })
+      const control = createInputControl(context, ["user", "name"])
+
+      expect(control.field.modelValue).toBe("John")
+
+      control.field["onUpdate:modelValue"]("Jane")
+
+      expect(control.state).toBe("Jane")
+      expect(control.field.modelValue).toBe("Jane")
+    })
+
+    it("should mark field as dirty when updated via onUpdate:modelValue", () => {
+      const context = useFormContext("original")
+      const control = createInputControl(context)
+
+      expect(control.dirty).toBe(false)
+
+      control.field["onUpdate:modelValue"]("modified")
+
+      expect(control.dirty).toBe(true)
+    })
+
+    it("should handle undefined values", () => {
+      const context = useFormContext("hello")
+      const control = createInputControl(context)
+
+      control.field["onUpdate:modelValue"](undefined)
+
+      expect(control.state).toBe(undefined)
+      expect(control.field.modelValue).toBe(undefined)
     })
   })
 
@@ -375,42 +578,52 @@ describe("createInputControl", () => {
     })
 
     describe("validation properties for object paths", () => {
-      it("should report isValid based on nested field errors", () => {
-        const context = useFormContext({ name: "John", age: 30 })
-        const { errors } = context
-        errors.value = {
-          name: [{ message: "Name is required", path: ["name"] }]
-        }
+      it("should report isValid based on nested field errors", async () => {
+        const schema = yup.object({
+          name: yup.string().required("Name is required"),
+          age: yup.number().required().min(0)
+        })
+        const context = useFormContext(
+          { name: "", age: 30 },
+          { validationSchema: schema }
+        )
         const nameControl = createInputControl(context, ["name"])
+        const ageControl = createInputControl(context, ["age"])
+
+        await context.validate()
 
         expect(nameControl.isValid).toBe(false)
         expect(nameControl.errorMessages).toEqual(["Name is required"])
 
         // Age field should be valid since it has no errors
-        const ageControl = createInputControl(context, ["age"])
         expect(ageControl.isValid).toBe(true)
         expect(ageControl.errorMessages).toEqual([])
       })
 
-      it("should handle deeply nested field validation", () => {
-        const context = useFormContext({
-          user: {
-            profile: {
-              name: "John",
-              contact: { email: "john@example.com" }
-            }
-          }
+      it("should handle deeply nested field validation", async () => {
+        const schema = yup.object({
+          user: yup.object({
+            profile: yup.object({
+              name: yup.string().required(),
+              contact: yup.object({
+                email: yup.string().email("Invalid email format").required()
+              })
+            })
+          })
         })
-        const { errors } = context
-        errors.value = {
-          "user.profile.contact.email": [
-            {
-              message: "Invalid email format",
-
-              path: ["user", "profile", "contact", "email"]
+        const context = useFormContext(
+          {
+            user: {
+              profile: {
+                name: "John",
+                contact: { email: "not-an-email" }
+              }
             }
-          ]
-        }
+          },
+          { validationSchema: schema }
+        )
+
+        await context.validate()
 
         const emailControl = createInputControl(context, [
           "user",
@@ -420,9 +633,7 @@ describe("createInputControl", () => {
         ])
 
         expect(emailControl.isValid).toBe(false)
-        expect(emailControl.errorMessages).toEqual([
-          "Invalid email format"
-        ])
+        expect(emailControl.errorMessages).toEqual(["Invalid email format"])
 
         // Name field should be valid
         const nameControl = createInputControl(context, [
@@ -434,29 +645,30 @@ describe("createInputControl", () => {
         expect(nameControl.errorMessages).toEqual([])
       })
 
-      it("should react to changes in nested errors", () => {
-        const context = useFormContext({ user: { name: "John" } })
-        const { errors } = context
+      it("should react to changes in nested errors", async () => {
+        const schema = yup.object({
+          user: yup.object({
+            name: yup.string().min(3, "Name must be longer").required()
+          })
+        })
+        const context = useFormContext(
+          { user: { name: "Jo" } },
+          { validationSchema: schema }
+        )
         const nameControl = createInputControl(context, ["user", "name"])
+
         expect(nameControl.isValid).toBe(true)
         expect(nameControl.errorMessages).toEqual([])
 
-        // Add error for nested field
-        errors.value = {
-          "user.name": [
-            {
-              message: "Name must be longer",
-
-              path: ["user", "name"]
-            }
-          ]
-        }
+        // Validate — should fail
+        await context.validate()
 
         expect(nameControl.isValid).toBe(false)
         expect(nameControl.errorMessages).toEqual(["Name must be longer"])
 
-        // Clear errors
-        errors.value = {}
+        // Fix value and validate again — errors should clear
+        nameControl.state = "John"
+        await context.validate()
 
         expect(nameControl.isValid).toBe(true)
         expect(nameControl.errorMessages).toEqual([])
@@ -706,12 +918,15 @@ describe("createInputControl", () => {
     })
 
     describe("validation properties for array paths", () => {
-      it("should report isValid based on array item errors", () => {
-        const context = useFormContext(["apple", "banana", "cherry"])
-        const { errors } = context
-        errors.value = {
-          "1": [{ message: "Item at index 1 is invalid", path: [1] }]
-        }
+      it("should report isValid based on array item errors", async () => {
+        const schema = yup
+          .array()
+          .of(yup.string().min(5, "Item must be at least 5 characters"))
+        const context = useFormContext(["apple", "no", "cherry"], {
+          validationSchema: schema
+        })
+
+        await context.validate()
 
         // First item should be valid
         const firstItemControl = createInputControl(context, [0])
@@ -722,39 +937,34 @@ describe("createInputControl", () => {
         const secondItemControl = createInputControl(context, [1])
         expect(secondItemControl.isValid).toBe(false)
         expect(secondItemControl.errorMessages).toEqual([
-          "Item at index 1 is invalid"
+          "Item must be at least 5 characters"
         ])
       })
 
-      it("should handle validation for nested objects in arrays", () => {
-        const context = useFormContext([
-          { name: "John", age: 30 },
-          { name: "Jane", age: 25 }
-        ])
-        const { errors } = context
-        errors.value = {
-          "0.name": [
-            {
-              message: "Name at index 0 is required",
-
-              path: [0, "name"]
-            }
+      it("should handle validation for nested objects in arrays", async () => {
+        const schema = yup.array().of(
+          yup.object({
+            name: yup.string().required("Name is required"),
+            age: yup
+              .number()
+              .required()
+              .min(0, "Age must be positive")
+          })
+        )
+        const context = useFormContext(
+          [
+            { name: "", age: 30 },
+            { name: "Jane", age: -5 }
           ],
-          "1.age": [
-            {
-              message: "Age at index 1 must be positive",
+          { validationSchema: schema }
+        )
 
-              path: [1, "age"]
-            }
-          ]
-        }
+        await context.validate()
 
         // First item's name should be invalid
         const firstNameControl = createInputControl(context, [0, "name"])
         expect(firstNameControl.isValid).toBe(false)
-        expect(firstNameControl.errorMessages).toEqual([
-          "Name at index 0 is required"
-        ])
+        expect(firstNameControl.errorMessages).toEqual(["Name is required"])
 
         // First item's age should be valid
         const firstAgeControl = createInputControl(context, [0, "age"])
@@ -765,52 +975,50 @@ describe("createInputControl", () => {
         const secondAgeControl = createInputControl(context, [1, "age"])
         expect(secondAgeControl.isValid).toBe(false)
         expect(secondAgeControl.errorMessages).toEqual([
-          "Age at index 1 must be positive"
+          "Age must be positive"
         ])
       })
 
-      it("should react to changes in array item errors", () => {
-        const context = useFormContext(["item1", "item2", "item3"])
-        const { errors } = context
+      it("should react to changes in array item errors", async () => {
+        const schema = yup
+          .array()
+          .of(yup.string().min(3, "Item too short"))
+        const context = useFormContext(["aaa", "bb", "ccc"], {
+          validationSchema: schema
+        })
         const middleItemControl = createInputControl(context, [1])
 
         expect(middleItemControl.isValid).toBe(true)
         expect(middleItemControl.errorMessages).toEqual([])
 
-        // Add error for middle item
-        errors.value = {
-          "1": [{ message: "Middle item is invalid", path: [1] }]
-        }
+        // Validate — middle item should fail
+        await context.validate()
 
         expect(middleItemControl.isValid).toBe(false)
-        expect(middleItemControl.errorMessages).toEqual([
-          "Middle item is invalid"
-        ])
+        expect(middleItemControl.errorMessages).toEqual(["Item too short"])
 
-        // Clear errors
-        errors.value = {}
+        // Fix value and validate again — errors should clear
+        middleItemControl.state = "bbb"
+        await context.validate()
 
         expect(middleItemControl.isValid).toBe(true)
         expect(middleItemControl.errorMessages).toEqual([])
       })
 
-      it("should handle multiple errors on the same array item", () => {
-        const context = useFormContext([{ name: "", age: -5 }])
-        const { errors } = context
-        errors.value = {
-          "0.name": [
-            {
-              message: "Name is required",
+      it("should handle multiple errors on the same array item", async () => {
+        const schema = yup.array().of(
+          yup.object({
+            name: yup
+              .string()
+              .required("Name is required")
+              .min(2, "Name must be at least 2 characters")
+          })
+        )
+        const context = useFormContext([{ name: "" }], {
+          validationSchema: schema
+        })
 
-              path: [0, "name"]
-            },
-            {
-              message: "Name must be at least 2 characters",
-
-              path: [0, "name"]
-            }
-          ]
-        }
+        await context.validate()
 
         const nameControl = createInputControl(context, [0, "name"])
         expect(nameControl.isValid).toBe(false)

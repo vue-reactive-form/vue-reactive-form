@@ -146,7 +146,7 @@ describe("standardValidate", () => {
 
       expect(result.success).toBe(false)
       if (!result.success) {
-        expect(result.issues.length).toBeGreaterThan(0)
+        expect(result.issues.length).toEqual(3)
 
         const nameIssue = result.issues.find((issue) =>
           issue.path.includes("name")
@@ -220,9 +220,8 @@ describe("standardValidate", () => {
 
       const input = [
         { name: "John", age: 25 },
-        { name: "", age: -5 },
-        { name: "Jane", age: 30 } // Fixed: should be a number, not string
-      ] as any // Using 'as any' to allow testing validation errors
+        { name: "", age: -5 }
+      ]
 
       const result = await standardValidate(schema, input)
 

@@ -1,6 +1,6 @@
 {
   "name": "@vue-reactive-form/core",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "description": "Lightweight, type-safe form validation library for Vue 3 that leverages Vue's reactivity system to provide a seamless and flexible way to manage form state and validation without depending on strings to link inputs to the form.",
   "type": "module",
   "repository": {

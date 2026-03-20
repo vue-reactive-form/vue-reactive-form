@@ -35,9 +35,7 @@ describe("useForm", () => {
       })
 
       expect(form.user.profile.name.$control.state).toBe("John")
-      expect(form.user.profile.email.$control.state).toBe(
-        "john@example.com"
-      )
+      expect(form.user.profile.email.$control.state).toBe("john@example.com")
     })
 
     it("should navigate to array properties", () => {
@@ -210,9 +208,7 @@ describe("useForm", () => {
       expect(form.id.$control.state).toBe(1)
       expect(form.active.$control.state).toBe(true)
       expect(form.user.metadata.tags[0]?.$control.state).toBe("admin")
-      expect(form.user.metadata.settings.theme.$control.state).toBe(
-        "dark"
-      )
+      expect(form.user.metadata.settings.theme.$control.state).toBe("dark")
       expect(form.scores[1]?.$control.state).toBe(92)
     })
   })
@@ -279,15 +275,11 @@ describe("useForm", () => {
 
       // Check name field validation
       expect(form.name.$control.isValid).toBe(false)
-      expect(form.name.$control.errorMessages).toEqual([
-        "Name is required"
-      ])
+      expect(form.name.$control.errorMessages).toEqual(["Name is required"])
 
       // Check age field validation
       expect(form.age.$control.isValid).toBe(false)
-      expect(form.age.$control.errorMessages).toEqual([
-        "Age must be positive"
-      ])
+      expect(form.age.$control.errorMessages).toEqual(["Age must be positive"])
     })
 
     it("should clear errors when validation succeeds", async () => {
@@ -516,65 +508,165 @@ describe("useForm", () => {
       expect(form.user.$control.touched).toBe(true)
       expect(form.user.profile.$control.touched).toBe(true)
     })
+
+    it("should not throw when handleSubmit is called without callbacks and validation fails", async () => {
+      const schema = yup.object({
+        name: yup.string().required("Name is required")
+      })
+      const { form, handleSubmit } = useForm(
+        { name: "" },
+        { validationSchema: schema }
+      )
+
+      // Access the field to populate the controls cache —
+      // setAllFieldsAsTouched only marks cached (i.e. accessed) fields
+      expect(form.name.$control.touched).toBe(false)
+
+      const submit = handleSubmit()
+      await submit()
+
+      // Should complete without throwing despite missing onError callback
+      expect(form.name.$control.touched).toBe(true)
+      expect(form.name.$control.isValid).toBe(false)
+    })
+
+    it("should not throw when handleSubmit is called without callbacks and validation succeeds", async () => {
+      const schema = yup.object({
+        name: yup.string().required()
+      })
+      const { form, handleSubmit } = useForm(
+        { name: "John" },
+        { validationSchema: schema }
+      )
+
+      // Access the field to populate the controls cache —
+      // setAllFieldsAsTouched only marks cached (i.e. accessed) fields
+      expect(form.name.$control.touched).toBe(false)
+
+      const submit = handleSubmit()
+      await submit()
+
+      // Should complete without throwing despite missing onSuccess callback
+      expect(form.name.$control.touched).toBe(true)
+      expect(form.name.$control.isValid).toBe(true)
+    })
   })
 
   describe("validateOn option", () => {
-    const schema = yup.object({
-      name: yup.string().required("Name is required")
+    describe("validateOn: submit", () => {
+      const schema = yup.object({
+        name: yup.string().required("Name is required")
+      })
+
+      it("should not validate on state change, only on submit", async () => {
+        const { form, errors, handleSubmit } = useForm(
+          { name: "default value" },
+          { validationSchema: schema }
+        )
+        // Initially no errors
+        expect(errors.value.name).toBeUndefined()
+
+        // Change value to invalid — should not trigger validation
+        form.name.$control.state = ""
+
+        expect(errors.value.name).toEqual([])
+
+        // Now submit — validation should run
+        const onSuccess = vi.fn()
+        const onError = vi.fn()
+        const submit = handleSubmit({ onSuccess, onError })
+
+        await submit()
+
+        expect(onSuccess).not.toHaveBeenCalled()
+        expect(onError).toHaveBeenCalled()
+        expect(errors.value.name).toBeDefined()
+        expect(
+          errors.value.name?.some(
+            (issue) => issue.message === "Name is required"
+          )
+        ).toBe(true)
+      })
     })
 
-    it("should validate on change by default (validateOn=submit)", async () => {
-      const { form, errors, handleSubmit } = useForm(
-        { name: "default value" },
-        { validationSchema: schema }
-      )
-      // Initially valid (before any change)
-      expect(errors.value.name).toBeUndefined()
+    describe("validateOn: blur", () => {
+      const schema = yup.object({
+        name: yup.string().required("Name is required"),
+        email: yup.string().email("Invalid email").required("Email is required")
+      })
 
-      // Change value, should not trigger validation
-      form.name.$control.state = ""
+      it("should trigger validation when a field is blurred", async () => {
+        const { form, errors } = useForm(
+          { name: "", email: "" },
+          { validationSchema: schema, validateOn: "blur" }
+        )
 
-      expect(errors.value.name).toEqual([])
+        // Focus then blur the name field
+        form.name.$control.field.onFocus()
+        await form.name.$control.field.onBlur()
 
-      // Now submit
-      const onSuccess = vi.fn()
-      const onError = vi.fn()
-      const submit = handleSubmit({ onSuccess, onError })
+        // Only the blurred field's errors should be written
+        expect(errors.value.name).toBeDefined()
+        expect(errors.value.email).toBeUndefined()
+      })
 
-      await submit()
+      it("should only show errors for touched fields via control", async () => {
+        const { form } = useForm(
+          { name: "", email: "" },
+          { validationSchema: schema, validateOn: "blur" }
+        )
 
-      expect(onSuccess).not.toHaveBeenCalled()
-      expect(onError).toHaveBeenCalled()
-      expect(errors.value.name).toBeDefined()
-      expect(
-        errors.value.name?.some((issue) => issue.message === "Name is required")
-      ).toBe(true)
-    })
+        // Focus + blur only the name field
+        form.name.$control.field.onFocus()
+        await form.name.$control.field.onBlur()
 
-    it("should only validate on submit if validateOn=submit", async () => {
-      const { form, errors, handleSubmit } = useForm(
-        { name: "default value" },
-        { validationSchema: schema }
-      )
+        // Name field is touched — errors visible
+        expect(form.name.$control.isValid).toBe(false)
+        expect(form.name.$control.errorMessages).toEqual(["Name is required"])
 
-      // Change value, should not trigger validation
-      form.name.$control.state = ""
+        // Email field is NOT touched — errors hidden
+        expect(form.email.$control.isValid).toBe(true)
+        expect(form.email.$control.errorMessages).toEqual([])
+      })
 
-      expect(errors.value.name).toEqual([])
+      it("should show all errors after submit", async () => {
+        const { form, handleSubmit } = useForm(
+          { name: "", email: "" },
+          { validationSchema: schema, validateOn: "blur" }
+        )
 
-      // Now submit
-      const onSuccess = vi.fn()
-      const onError = vi.fn()
-      const submit = handleSubmit({ onSuccess, onError })
+        // Access both fields
+        expect(form.name.$control.touched).toBe(false)
+        expect(form.email.$control.touched).toBe(false)
 
-      await submit()
+        const submit = handleSubmit()
+        await submit()
 
-      expect(onSuccess).not.toHaveBeenCalled()
-      expect(onError).toHaveBeenCalled()
-      expect(errors.value.name).toBeDefined()
-      expect(
-        errors.value.name?.some((issue) => issue.message === "Name is required")
-      ).toBe(true)
+        // After submit, all fields are touched — all errors visible
+        expect(form.name.$control.isValid).toBe(false)
+        expect(form.name.$control.errorMessages).toEqual(["Name is required"])
+        expect(form.email.$control.isValid).toBe(false)
+        expect(form.email.$control.errorMessages).toEqual(["Email is required"])
+      })
+
+      it("should not show errors for untouched fields even when form has errors", async () => {
+        const { form } = useForm(
+          { name: "", email: "valid@email.com" },
+          { validationSchema: schema, validateOn: "blur" }
+        )
+
+        // Focus + blur email (valid), which triggers validation
+        form.email.$control.field.onFocus()
+        await form.email.$control.field.onBlur()
+
+        // Email is touched and valid
+        expect(form.email.$control.isValid).toBe(true)
+        expect(form.email.$control.errorMessages).toEqual([])
+
+        // Name is invalid but untouched — errors hidden
+        expect(form.name.$control.isValid).toBe(true)
+        expect(form.name.$control.errorMessages).toEqual([])
+      })
     })
   })
 
@@ -605,9 +697,7 @@ describe("useForm", () => {
       result = await validate()
       expect(result).toBeUndefined()
       expect(form.name.$control.isValid).toBe(false)
-      expect(form.name.$control.errorMessages).toEqual([
-        "Name is required"
-      ])
+      expect(form.name.$control.errorMessages).toEqual(["Name is required"])
     })
 
     it("should handle schema ref going from undefined to defined", async () => {
@@ -632,9 +722,7 @@ describe("useForm", () => {
       result = await validate()
       expect(result).toBeUndefined()
       expect(form.name.$control.isValid).toBe(false)
-      expect(form.name.$control.errorMessages).toEqual([
-        "Name is required"
-      ])
+      expect(form.name.$control.errorMessages).toEqual(["Name is required"])
     })
 
     it("should work with plain object schema (non-ref)", async () => {
@@ -650,9 +738,7 @@ describe("useForm", () => {
       const result = await validate()
       expect(result).toBeUndefined()
       expect(form.name.$control.isValid).toBe(false)
-      expect(form.name.$control.errorMessages).toEqual([
-        "Name is required"
-      ])
+      expect(form.name.$control.errorMessages).toEqual(["Name is required"])
     })
 
     it("should validate against different schema types after update", async () => {
@@ -675,6 +761,59 @@ describe("useForm", () => {
       expect(result).toBeUndefined()
       // Number schema will have different error
       expect(form.$control.isValid).toBe(false)
+    })
+  })
+
+  describe("Concurrent validation", () => {
+    it("should discard stale validation results when a newer validation starts", async () => {
+      const schema = yup.object({
+        name: yup.string().required("Name is required")
+      })
+      const { form, validate } = useForm(
+        { name: "" },
+        { validationSchema: schema }
+      )
+
+      // Fire first validation (will fail — name is empty)
+      const first = validate()
+
+      // Before first resolves, fix value and fire second validation
+      form.name.$control.state = "John"
+      const second = validate()
+
+      // Wait for both to settle
+      await first
+      await second
+
+      // The second (valid) result should win — first result must be discarded
+      expect(form.name.$control.isValid).toBe(true)
+      expect(form.name.$control.errorMessages).toEqual([])
+    })
+
+    it("should discard stale field validation on concurrent blur", async () => {
+      const schema = yup.object({
+        name: yup.string().required("Name is required")
+      })
+      const { form } = useForm(
+        { name: "" },
+        { validationSchema: schema, validateOn: "blur" }
+      )
+
+      // First blur triggers validation while name is empty
+      form.name.$control.field.onFocus()
+      const firstBlur = form.name.$control.field.onBlur()
+
+      // Before first resolves, fix value and blur again
+      form.name.$control.state = "John"
+      form.name.$control.field.onFocus()
+      const secondBlur = form.name.$control.field.onBlur()
+
+      await firstBlur
+      await secondBlur
+
+      // Second (valid) result should win
+      expect(form.name.$control.isValid).toBe(true)
+      expect(form.name.$control.errorMessages).toEqual([])
     })
   })
 })

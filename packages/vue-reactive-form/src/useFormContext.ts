@@ -1,16 +1,28 @@
-import { ref, type Ref } from "@vue/reactivity"
-import type { ControlsCache, FormContext, FormErrors } from "./types/useForm"
+import { ref, toValue, type Ref } from "@vue/reactivity"
+import type {
+  ControlsCache,
+  FormContext,
+  FormErrors,
+  UseFormContextOptions
+} from "./types/useForm"
 import type { PartialOrPrimitive } from "./types/utils"
 import { cloneDeep, get, set, type PropertyPath } from "lodash-es"
-import type { ValidationIssue } from "./validation"
+import {
+  buildErrorsObject,
+  standardValidate,
+  type ValidationIssue
+} from "./validation"
 
 const getPathAsString = (path: PropertyPath) => {
   return Array.isArray(path) && path.length ? path.join(".") : ""
 }
 
-export const useFormContext = <TState>(
-  defaultState?: PartialOrPrimitive<TState>
-): FormContext<PartialOrPrimitive<TState>> => {
+export const useFormContext = <TState, TValidatedState = TState>(
+  defaultState?: PartialOrPrimitive<TState>,
+  options: UseFormContextOptions<TState, TValidatedState> = {}
+): FormContext<PartialOrPrimitive<TState>, TValidatedState> => {
+  const { validationSchema, validateOn = "submit" } = options
+
   const defaultFormState = ref(cloneDeep(defaultState)) as Ref<
     PartialOrPrimitive<TState | undefined>
   >
@@ -72,6 +84,63 @@ export const useFormContext = <TState>(
     }
   }
 
+  let validationGeneration = 0
+
+  const runValidation = async () => {
+    const schema = toValue(validationSchema)
+    if (!schema) {
+      console.warn(
+        "[vue-reactive-form] No validation schema provided. Skipping validation."
+      )
+      return {
+        skipped: true as const,
+        state: state.value as unknown as TValidatedState
+      }
+    }
+
+    const currentGeneration = ++validationGeneration
+
+    const result = await standardValidate(schema, state.value)
+
+    // A newer validation was started while this one was in flight — discard
+    if (currentGeneration !== validationGeneration) {
+      return { stale: true as const }
+    }
+
+    return result
+  }
+
+  const validate = async () => {
+    const result = await runValidation()
+
+    if ("skipped" in result) return result.state
+    if ("stale" in result) return
+
+    errors.value = {}
+
+    if (!result.success) {
+      errors.value = buildErrorsObject(result.issues)
+      return
+    } else {
+      return result.output
+    }
+  }
+
+  const validateField = async (path: PropertyPath) => {
+    const result = await runValidation()
+
+    if ("skipped" in result || "stale" in result) return
+
+    const pathStr = getPathAsString(path)
+
+    if (!result.success) {
+      const allErrors = buildErrorsObject(result.issues)
+      errors.value[pathStr] = allErrors[pathStr] ?? []
+    } else {
+      delete errors.value[pathStr]
+    }
+  }
+
   return {
     state,
     defaultFormState,
@@ -83,6 +152,9 @@ export const useFormContext = <TState>(
     setAllFieldsAsTouched,
     getFieldState,
     getFieldErrors,
-    isFieldTouched
+    isFieldTouched,
+    validate,
+    validateField,
+    validateOn
   }
 }

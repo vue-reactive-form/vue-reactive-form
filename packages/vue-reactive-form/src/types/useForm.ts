@@ -17,7 +17,7 @@ export type FormErrors = Record<string, ValidationIssue[]>
  * Internal context shared across the form's control tree.
  * Contains all the core reactive state needed by form controls.
  */
-export type FormContext<TState> = {
+export type FormContext<TState, TValidatedState = TState> = {
   /** The current form state */
   state: Ref<TState>
   /** The default/initial form state, used for dirty checking and reset */
@@ -77,15 +77,35 @@ export type FormContext<TState> = {
    * Sets all fields that have been accessed (cached) as touched.
    */
   setAllFieldsAsTouched: () => void
+  /**
+   * Handler to imperatively invoke the form's validation.
+   * When successful returns the validated state, otherwise it returns undefined.
+   */
+  validate: () => Promise<TValidatedState | undefined>
+  /**
+   * Runs full validation but only updates the errors for a specific field.
+   * Used for blur-triggered validation so that only the blurred field's errors are updated.
+   *
+   * @param path The path of the field whose errors should be updated.
+   */
+  validateField: (path: PropertyPath) => Promise<void>
+  /** When validation is triggered: "submit" (default) or "blur" */
+  validateOn: ValidateOn
 }
 
-export type ValidateOn = "submit" | "change"
+export type ValidateOn = "submit" | "blur"
 
-export type UseFormOptions<TState, TValidatedState = TState> = {
+export type UseFormContextOptions<TState, TValidatedState = TState> = {
   validationSchema?: MaybeRef<
     StandardSchemaV1<TState, TValidatedState> | undefined
   >
+  validateOn?: ValidateOn
 }
+
+export type UseFormOptions<
+  TState,
+  TValidatedState = TState
+> = UseFormContextOptions<TState, TValidatedState>
 
 export type HandleSubmitOptions<TValidatedState> = {
   /**
