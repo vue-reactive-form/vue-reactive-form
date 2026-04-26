@@ -1,0 +1,1019 @@
+import { describe, it, expect, vi } from "vitest"
+import { createUseForm } from "../useForm"
+import * as yup from "yup"
+import { testAdapter } from "./testAdapter"
+
+const useForm = createUseForm(testAdapter)
+
+describe("useForm", () => {
+  describe("Controls tree navigation", () => {
+    it("should handle primitive root state", () => {
+      const { form } = useForm("Hello World")
+
+      expect(form.$control.state).toBe("Hello World")
+    })
+
+    it("should handle array root state", () => {
+      const { form } = useForm(["Hello World"])
+
+      expect(form.$control.state).toEqual(["Hello World"])
+    })
+
+    it("should navigate to primitive properties", () => {
+      const { form } = useForm({ name: "John", age: 30 })
+
+      expect(form.name.$control.state).toBe("John")
+      expect(form.age.$control.state).toBe(30)
+    })
+
+    it("should navigate to nested object properties", () => {
+      const { form } = useForm({
+        user: {
+          profile: {
+            name: "John",
+            email: "john@example.com"
+          }
+        }
+      })
+
+      expect(form.user.profile.name.$control.state).toBe("John")
+      expect(form.user.profile.email.$control.state).toBe("john@example.com")
+    })
+
+    it("should navigate to array properties", () => {
+      const { form } = useForm({
+        tags: ["javascript", "vue", "typescript"]
+      })
+
+      expect(form.tags.$control.state).toEqual([
+        "javascript",
+        "vue",
+        "typescript"
+      ])
+    })
+
+    it("should navigate to array elements", () => {
+      const { form } = useForm({
+        users: [
+          { name: "John", age: 30 },
+          { name: "Jane", age: 25 }
+        ]
+      })
+
+      expect(form.users[0]?.name.$control.state).toBe("John")
+      expect(form.users[0]?.age.$control.state).toBe(30)
+      expect(form.users[1]?.name.$control.state).toBe("Jane")
+      expect(form.users[1]?.age.$control.state).toBe(25)
+    })
+
+    it("should iterate over array elements", () => {
+      const { form } = useForm({
+        items: ["a", "b", "c"]
+      })
+
+      const values = []
+      for (const item of form.items) {
+        values.push(item.$control.state)
+      }
+
+      expect(values).toEqual(["a", "b", "c"])
+    })
+
+    it("should handle deeply nested structures", () => {
+      const { form } = useForm({
+        company: {
+          departments: [
+            {
+              name: "Engineering",
+              employees: [
+                { name: "John", skills: ["js", "vue"] },
+                { name: "Jane", skills: ["python", "django"] }
+              ]
+            }
+          ]
+        }
+      })
+
+      expect(form.company.departments[0]?.name.$control.state).toBe(
+        "Engineering"
+      )
+      expect(
+        form.company.departments[0]?.employees[0]?.name.$control.state
+      ).toBe("John")
+      expect(
+        form.company.departments[0]?.employees[0]?.skills.$control.state
+      ).toEqual(["js", "vue"])
+      expect(
+        form.company.departments[0]?.employees[1]?.skills[1]?.$control.state
+      ).toBe("django")
+    })
+
+    it("should maintain the same control reference for the same path", () => {
+      const { form } = useForm({ name: "John" })
+
+      const control1 = form.name.$control
+      const control2 = form.name.$control
+
+      expect(control1).toBe(control2)
+    })
+
+    it("should handle empty objects and arrays", () => {
+      const { form } = useForm({
+        emptyObject: {},
+        emptyArray: []
+      })
+
+      expect(form.emptyObject.$control.state).toEqual({})
+      expect(form.emptyArray.$control.state).toEqual([])
+    })
+
+    it("should handle undefined properties", () => {
+      const { form } = useForm<{ name: string; age: number }>({})
+
+      expect(form.name.$control.state).toBe(undefined)
+      expect(form.age.$control.state).toBe(undefined)
+    })
+
+    it("should update state through controls tree navigation", () => {
+      const { form } = useForm<{ user: { name: string } }>({
+        user: { name: "John" }
+      })
+
+      form.user.name.$control.state = "Jane"
+
+      expect(form.user.name.$control.state).toBe("Jane")
+      expect(form.user.name.$control.dirty).toBe(true)
+    })
+
+    it("should update state in root primitive through controls tree navigation", () => {
+      const { form } = useForm("Hello")
+
+      form.$control.state = "World"
+
+      expect(form.$control.state).toBe("World")
+      expect(form.$control.dirty).toBe(true)
+    })
+
+    it("should update state in root array through controls tree navigation", () => {
+      const { form } = useForm<string[]>(["a", "b", "c"])
+
+      form.$control.state = ["x", "y", "z"]
+
+      expect(form.$control.state).toEqual(["x", "y", "z"])
+      expect(form.$control.dirty).toBe(true)
+    })
+
+    it("should update state in object through controls tree navigation", () => {
+      const { form } = useForm<{ user: { name: string } }>({
+        user: { name: "John" }
+      })
+
+      form.user.name.$control.state = "Jane"
+
+      expect(form.user.name.$control.state).toBe("Jane")
+      expect(form.user.name.$control.dirty).toBe(true)
+
+      form.user.$control.state = { name: "Alice" }
+
+      expect(form.user.name.$control.state).toBe("Alice")
+      expect(form.user.name.$control.dirty).toBe(true)
+    })
+
+    it("should update state in arrays through controls tree navigation", () => {
+      const { form } = useForm<{ user: { skills: string[] } }>({
+        user: { skills: ["js", "vue"] }
+      })
+
+      form.user.skills[0]!.$control.state = "react"
+
+      expect(form.user.skills[0]?.$control.state).toBe("react")
+      expect(form.user.skills[0]?.$control.dirty).toBe(true)
+    })
+
+    it("should handle mixed data types in complex structures", () => {
+      const { form } = useForm({
+        id: 1,
+        active: true,
+        user: {
+          name: "John",
+          metadata: {
+            tags: ["admin", "user"],
+            settings: {
+              theme: "dark",
+              notifications: true
+            }
+          }
+        },
+        scores: [85, 92, 78]
+      })
+
+      expect(form.id.$control.state).toBe(1)
+      expect(form.active.$control.state).toBe(true)
+      expect(form.user.metadata.tags[0]?.$control.state).toBe("admin")
+      expect(form.user.metadata.settings.theme.$control.state).toBe("dark")
+      expect(form.scores[1]?.$control.state).toBe(92)
+    })
+  })
+
+  describe("Validation", () => {
+    it("should return the form's state when no validation schema is provided", async () => {
+      const { validate } = useForm("hello")
+
+      const result = await validate()
+
+      expect(result).toBe("hello")
+    })
+
+    it("should validate successfully with a simple schema", async () => {
+      const schema = yup.string().required()
+      const { validate } = useForm("hello", { validationSchema: schema })
+
+      const result = await validate()
+
+      expect(result).toBe("hello")
+    })
+
+    it("should return undefined when validation fails", async () => {
+      const schema = yup.string().required()
+      const { validate } = useForm("", { validationSchema: schema })
+
+      const result = await validate()
+
+      expect(result).toBe(undefined)
+    })
+
+    it("should test control validity state after validation", async () => {
+      const schema = yup.string().required("Name is required")
+      const { form, validate } = useForm("", { validationSchema: schema })
+
+      // Check initial state
+      expect(form.$control.isValid).toBe(true)
+      expect(form.$control.errorMessages).toEqual([])
+
+      // Validate and check if control state updates
+      const result = await validate()
+      expect(result).toBe(undefined)
+
+      // Check if control validity is updated after validation
+      expect(form.$control.isValid).toBe(false)
+      expect(form.$control.errorMessages).toEqual(["Name is required"])
+    })
+
+    it("should validate object properties correctly", async () => {
+      const schema = yup.object({
+        name: yup.string().required("Name is required"),
+        age: yup
+          .number()
+          .required("Age is required")
+          .min(0, "Age must be positive")
+      })
+      const { form, validate } = useForm(
+        { name: "", age: -5 },
+        { validationSchema: schema }
+      )
+
+      const result = await validate()
+      expect(result).toBe(undefined)
+
+      // Check name field validation
+      expect(form.name.$control.isValid).toBe(false)
+      expect(form.name.$control.errorMessages).toEqual(["Name is required"])
+
+      // Check age field validation
+      expect(form.age.$control.isValid).toBe(false)
+      expect(form.age.$control.errorMessages).toEqual(["Age must be positive"])
+    })
+
+    it("should clear errors when validation succeeds", async () => {
+      const schema = yup.string().required("Name is required")
+      const { form, validate } = useForm("", { validationSchema: schema })
+
+      // First validation should fail
+      let result = await validate()
+      expect(result).toBe(undefined)
+      expect(form.$control.isValid).toBe(false)
+
+      // Fix the value and validate again
+      form.$control.state = "hello"
+      result = await validate()
+
+      expect(result).toBe("hello")
+      expect(form.$control.isValid).toBe(true)
+      expect(form.$control.errorMessages).toEqual([])
+    })
+
+    it("should validate arrays correctly", async () => {
+      const schema = yup
+        .array()
+        .of(yup.string().required("Item is required"))
+        .min(1, "At least one item required")
+      const { form, validate } = useForm([], { validationSchema: schema })
+
+      const result = await validate()
+      expect(result).toBe(undefined)
+
+      // Check array validation
+      expect(form.$control.isValid).toBe(false)
+      expect(form.$control.errorMessages).toEqual([
+        "At least one item required"
+      ])
+    })
+
+    it("should validate nested arrays in objects correctly", async () => {
+      const schema = yup.object({
+        name: yup.string().required("Name is required"),
+        tags: yup
+          .array()
+          .of(yup.string().required("Tag cannot be empty"))
+          .min(1, "At least one tag required")
+      })
+      const { form, validate } = useForm(
+        { name: "John", tags: [] },
+        { validationSchema: schema }
+      )
+
+      const result = await validate()
+      expect(result).toBe(undefined)
+
+      // Check name field (should be valid)
+      expect(form.name).toBeDefined()
+      expect(form.name.$control.isValid).toBe(true)
+      expect(form.name.$control.errorMessages).toEqual([])
+
+      // Check tags array validation
+      expect(form.tags).toBeDefined()
+      expect(form.tags?.$control.isValid).toBe(false)
+      expect(form.tags?.$control.errorMessages).toEqual([
+        "At least one tag required"
+      ])
+    })
+  })
+
+  describe("Handle Submit", () => {
+    it("should call onSuccess when validation passes in handleSubmit", async () => {
+      const schema = yup.object({
+        name: yup.string().required()
+      })
+      const { handleSubmit } = useForm(
+        { name: "John" },
+        { validationSchema: schema }
+      )
+
+      const onSuccess = vi.fn()
+      const onError = vi.fn()
+      const submit = handleSubmit({ onSuccess, onError })
+
+      await submit()
+
+      expect(onSuccess).toHaveBeenCalledWith({ name: "John" })
+      expect(onError).not.toHaveBeenCalled()
+    })
+
+    it("should call onError when validation fails in handleSubmit", async () => {
+      const schema = yup.object({
+        name: yup.string().required("Name is required")
+      })
+      const { handleSubmit, meta } = useForm(
+        { name: "" },
+        { validationSchema: schema }
+      )
+
+      const onSuccess = vi.fn()
+      const onError = vi.fn()
+      const submit = handleSubmit({ onSuccess, onError })
+
+      await submit()
+
+      expect(onSuccess).not.toHaveBeenCalled()
+      expect(onError).toHaveBeenCalledWith({
+        name: [{ message: "Name is required", path: ["name"] }]
+      })
+      expect(meta.errors.name).toBeDefined()
+    })
+
+    it("should call onSuccess with state when no validation schema is provided", async () => {
+      const { handleSubmit } = useForm({ foo: "bar" })
+      const onSuccess = vi.fn()
+      const onError = vi.fn()
+      const submit = handleSubmit({ onSuccess, onError })
+      await submit()
+      expect(onSuccess).toHaveBeenCalledWith({ foo: "bar" })
+      expect(onError).not.toHaveBeenCalled()
+    })
+
+    it("should call preventDefault on event if passed to submit", async () => {
+      const form = useForm({ foo: "bar" })
+      const onSuccess = vi.fn()
+      const onError = vi.fn()
+      const submit = form.handleSubmit({ onSuccess, onError })
+      // Use a minimal mock that satisfies the SubmitEvent type
+      const event = {
+        preventDefault: vi.fn() // only testing preventDefault call
+      } as unknown as SubmitEvent
+
+      await submit(event)
+
+      expect(event.preventDefault).toHaveBeenCalled()
+      expect(onSuccess).toHaveBeenCalledWith({ foo: "bar" })
+      expect(onError).not.toHaveBeenCalled()
+    })
+
+    it("should mark all accessed fields as touched after submit", async () => {
+      const schema = yup.object({
+        name: yup.string().required(),
+        age: yup.number().required()
+      })
+      const { form, handleSubmit } = useForm(
+        { name: "John", age: 30 },
+        { validationSchema: schema }
+      )
+
+      // Access fields through the controls tree
+      expect(form.name.$control.touched).toBe(false)
+      expect(form.age.$control.touched).toBe(false)
+
+      const submit = handleSubmit({ onSuccess: vi.fn() })
+      await submit()
+
+      expect(form.name.$control.touched).toBe(true)
+      expect(form.age.$control.touched).toBe(true)
+    })
+
+    it("should mark fields as touched even when validation fails", async () => {
+      const schema = yup.object({
+        name: yup.string().required("Name is required"),
+        email: yup.string().email().required("Email is required")
+      })
+      const { form, handleSubmit } = useForm(
+        { name: "", email: "" },
+        { validationSchema: schema }
+      )
+
+      // Access fields
+      expect(form.name.$control.touched).toBe(false)
+      expect(form.email.$control.touched).toBe(false)
+
+      const onError = vi.fn()
+      const submit = handleSubmit({ onError })
+      await submit()
+
+      expect(onError).toHaveBeenCalled()
+      expect(form.name.$control.touched).toBe(true)
+      expect(form.email.$control.touched).toBe(true)
+    })
+
+    it("should not mark fields that were never accessed as touched", async () => {
+      const schema = yup.object({
+        name: yup.string().required(),
+        secret: yup.string()
+      })
+      const { form, handleSubmit } = useForm(
+        { name: "John", secret: "hidden" },
+        { validationSchema: schema }
+      )
+
+      // Only access 'name', never access 'secret'
+      expect(form.name.$control.touched).toBe(false)
+
+      const submit = handleSubmit({ onSuccess: vi.fn() })
+      await submit()
+
+      expect(form.name.$control.touched).toBe(true)
+      // 'secret' was never accessed through the controls tree, so it won't be in the cache
+      expect(form.secret.$control.touched).toBe(false)
+    })
+
+    it("should mark deeply nested accessed fields as touched after submit", async () => {
+      const schema = yup.object({
+        user: yup.object({
+          profile: yup.object({
+            name: yup.string().required(),
+            email: yup.string().email().required()
+          })
+        })
+      })
+      const { form, handleSubmit } = useForm(
+        { user: { profile: { name: "John", email: "john@example.com" } } },
+        { validationSchema: schema }
+      )
+
+      // Access deeply nested fields
+      expect(form.user.profile.name.$control.touched).toBe(false)
+      expect(form.user.profile.email.$control.touched).toBe(false)
+
+      const submit = handleSubmit({ onSuccess: vi.fn() })
+      await submit()
+
+      expect(form.user.profile.name.$control.touched).toBe(true)
+      expect(form.user.profile.email.$control.touched).toBe(true)
+      // Intermediate nodes should also be touched
+      expect(form.user.$control.touched).toBe(true)
+      expect(form.user.profile.$control.touched).toBe(true)
+    })
+
+    it("should not throw when handleSubmit is called without callbacks and validation fails", async () => {
+      const schema = yup.object({
+        name: yup.string().required("Name is required")
+      })
+      const { form, handleSubmit } = useForm(
+        { name: "" },
+        { validationSchema: schema }
+      )
+
+      // Access the field to populate the controls cache —
+      // setAllFieldsAsTouched only marks cached (i.e. accessed) fields
+      expect(form.name.$control.touched).toBe(false)
+
+      const submit = handleSubmit()
+      await submit()
+
+      // Should complete without throwing despite missing onError callback
+      expect(form.name.$control.touched).toBe(true)
+      expect(form.name.$control.isValid).toBe(false)
+    })
+
+    it("should not throw when handleSubmit is called without callbacks and validation succeeds", async () => {
+      const schema = yup.object({
+        name: yup.string().required()
+      })
+      const { form, handleSubmit } = useForm(
+        { name: "John" },
+        { validationSchema: schema }
+      )
+
+      // Access the field to populate the controls cache —
+      // setAllFieldsAsTouched only marks cached (i.e. accessed) fields
+      expect(form.name.$control.touched).toBe(false)
+
+      const submit = handleSubmit()
+      await submit()
+
+      // Should complete without throwing despite missing onSuccess callback
+      expect(form.name.$control.touched).toBe(true)
+      expect(form.name.$control.isValid).toBe(true)
+    })
+  })
+
+  describe("validateOn option", () => {
+    describe("validateOn: submit", () => {
+      const schema = yup.object({
+        name: yup.string().required("Name is required")
+      })
+
+      it("should not validate on state change, only on submit", async () => {
+        const { form, meta, handleSubmit } = useForm(
+          { name: "default value" },
+          { validationSchema: schema }
+        )
+        // Initially no errors
+        expect(meta.errors.name).toBeUndefined()
+
+        // Change value to invalid — should not trigger validation
+        form.name.$control.state = ""
+
+        expect(meta.errors.name).toEqual([])
+
+        // Now submit — validation should run
+        const onSuccess = vi.fn()
+        const onError = vi.fn()
+        const submit = handleSubmit({ onSuccess, onError })
+
+        await submit()
+
+        expect(onSuccess).not.toHaveBeenCalled()
+        expect(onError).toHaveBeenCalled()
+        expect(meta.errors.name).toBeDefined()
+        expect(
+          meta.errors.name?.some(
+            (issue) => issue.message === "Name is required"
+          )
+        ).toBe(true)
+      })
+    })
+
+    describe("validateOn: blur", () => {
+      const schema = yup.object({
+        name: yup.string().required("Name is required"),
+        email: yup.string().email("Invalid email").required("Email is required")
+      })
+
+      it("should trigger validation when a field is blurred", async () => {
+        const { form, meta } = useForm(
+          { name: "", email: "" },
+          { validationSchema: schema, validateOn: "blur" }
+        )
+
+        // Focus then blur the name field
+        form.name.$control.field.onFocus()
+        await form.name.$control.field.onBlur()
+
+        // Only the blurred field's errors should be written
+        expect(meta.errors.name).toBeDefined()
+        expect(meta.errors.email).toBeUndefined()
+      })
+
+      it("should only show errors for touched fields via control", async () => {
+        const { form } = useForm(
+          { name: "", email: "" },
+          { validationSchema: schema, validateOn: "blur" }
+        )
+
+        // Focus + blur only the name field
+        form.name.$control.field.onFocus()
+        await form.name.$control.field.onBlur()
+
+        // Name field is touched — errors visible
+        expect(form.name.$control.isValid).toBe(false)
+        expect(form.name.$control.errorMessages).toEqual(["Name is required"])
+
+        // Email field is NOT touched — errors hidden
+        expect(form.email.$control.isValid).toBe(true)
+        expect(form.email.$control.errorMessages).toEqual([])
+      })
+
+      it("should show all errors after submit", async () => {
+        const { form, handleSubmit } = useForm(
+          { name: "", email: "" },
+          { validationSchema: schema, validateOn: "blur" }
+        )
+
+        // Access both fields
+        expect(form.name.$control.touched).toBe(false)
+        expect(form.email.$control.touched).toBe(false)
+
+        const submit = handleSubmit()
+        await submit()
+
+        // After submit, all fields are touched — all errors visible
+        expect(form.name.$control.isValid).toBe(false)
+        expect(form.name.$control.errorMessages).toEqual(["Name is required"])
+        expect(form.email.$control.isValid).toBe(false)
+        expect(form.email.$control.errorMessages).toEqual(["Email is required"])
+      })
+
+      it("should not show errors for untouched fields even when form has errors", async () => {
+        const { form } = useForm(
+          { name: "", email: "valid@email.com" },
+          { validationSchema: schema, validateOn: "blur" }
+        )
+
+        // Focus + blur email (valid), which triggers validation
+        form.email.$control.field.onFocus()
+        await form.email.$control.field.onBlur()
+
+        // Email is touched and valid
+        expect(form.email.$control.isValid).toBe(true)
+        expect(form.email.$control.errorMessages).toEqual([])
+
+        // Name is invalid but untouched — errors hidden
+        expect(form.name.$control.isValid).toBe(true)
+        expect(form.name.$control.errorMessages).toEqual([])
+      })
+    })
+  })
+
+  describe("Reactive validation schema", () => {
+    it("should use updated schema when validation is invoked after schema changes", async () => {
+      const lenientSchema = yup.object({
+        name: yup.string()
+      })
+      const strictSchema = yup.object({
+        name: yup.string().required("Name is required")
+      })
+
+      let currentSchema: typeof lenientSchema | typeof strictSchema = lenientSchema
+      const { form, validate } = useForm(
+        { name: "" },
+        { validationSchema: () => currentSchema }
+      )
+
+      // With lenient schema, empty name should pass
+      let result = await validate()
+      expect(result).toEqual({ name: "" })
+      expect(form.name.$control.isValid).toBe(true)
+
+      // Update to strict schema
+      currentSchema = strictSchema
+
+      // Now validation should fail
+      result = await validate()
+      expect(result).toBeUndefined()
+      expect(form.name.$control.isValid).toBe(false)
+      expect(form.name.$control.errorMessages).toEqual(["Name is required"])
+    })
+
+    it("should handle schema going from undefined to defined", async () => {
+      const schema = yup.object({
+        name: yup.string().required("Name is required")
+      })
+
+      let currentSchema: yup.Schema<{ name: string }> | undefined = undefined
+      const { form, validate } = useForm(
+        { name: "" },
+        { validationSchema: () => currentSchema }
+      )
+
+      // With no schema, should return state as-is
+      let result = await validate()
+      expect(result).toEqual({ name: "" })
+
+      // Set the schema
+      currentSchema = schema
+
+      // Now validation should work
+      result = await validate()
+      expect(result).toBeUndefined()
+      expect(form.name.$control.isValid).toBe(false)
+      expect(form.name.$control.errorMessages).toEqual(["Name is required"])
+    })
+
+    it("should work with plain object schema (non-getter)", async () => {
+      const schema = yup.object({
+        name: yup.string().required("Name is required")
+      })
+
+      const { form, validate } = useForm(
+        { name: "" },
+        { validationSchema: schema }
+      )
+
+      const result = await validate()
+      expect(result).toBeUndefined()
+      expect(form.name.$control.isValid).toBe(false)
+      expect(form.name.$control.errorMessages).toEqual(["Name is required"])
+    })
+
+    it("should validate against different schema types after update", async () => {
+      const stringSchema = yup.string().required("String required")
+      const numberSchema = yup.number().required("Number required")
+
+      let currentSchema: yup.Schema = stringSchema
+      const { form, validate } = useForm("", { validationSchema: () => currentSchema })
+
+      // Validate against string schema - empty string should fail
+      let result = await validate()
+      expect(result).toBeUndefined()
+      expect(form.$control.errorMessages).toEqual(["String required"])
+
+      // Update to number schema
+      currentSchema = numberSchema
+
+      // Validate again - empty string should fail number validation
+      result = await validate()
+      expect(result).toBeUndefined()
+      // Number schema will have different error
+      expect(form.$control.isValid).toBe(false)
+    })
+  })
+
+  describe("meta", () => {
+    describe("isValid", () => {
+      const schema = yup.object({
+        name: yup.string().required("Name is required")
+      })
+
+      it("should be true before any validation has run", () => {
+        const { meta } = useForm({ name: "" }, { validationSchema: schema })
+
+        expect(meta.isValid).toBe(true)
+      })
+
+      it("should be false after validation fails", async () => {
+        const { meta, validate } = useForm(
+          { name: "" },
+          { validationSchema: schema }
+        )
+
+        await validate()
+
+        expect(meta.isValid).toBe(false)
+      })
+
+      it("should be true after validation succeeds", async () => {
+        const { meta, validate } = useForm(
+          { name: "John" },
+          { validationSchema: schema }
+        )
+
+        await validate()
+
+        expect(meta.isValid).toBe(true)
+      })
+
+      it("should become true again when errors are cleared after a state change", async () => {
+        const { form, meta, validate } = useForm(
+          { name: "" },
+          { validationSchema: schema }
+        )
+
+        await validate()
+        expect(meta.isValid).toBe(false)
+
+        form.name.$control.state = "John"
+        await validate()
+        expect(meta.isValid).toBe(true)
+      })
+    })
+
+    describe("isDirty", () => {
+      it("should be false when state matches default state", () => {
+        const { meta } = useForm({ name: "John" })
+
+        expect(meta.isDirty).toBe(false)
+      })
+
+      it("should be true after a field value changes", () => {
+        const { form, meta } = useForm({ name: "John" })
+
+        form.name.$control.state = "Jane"
+
+        expect(meta.isDirty).toBe(true)
+      })
+
+      it("should be false again after resetting to default state", () => {
+        const { form, meta } = useForm({ name: "John" })
+
+        form.name.$control.state = "Jane"
+        expect(meta.isDirty).toBe(true)
+
+        form.name.$control.reset()
+        expect(meta.isDirty).toBe(false)
+      })
+
+      it("should handle nested state changes", () => {
+        const { form, meta } = useForm({ user: { name: "John" } })
+
+        expect(meta.isDirty).toBe(false)
+        form.user.name.$control.state = "Jane"
+        expect(meta.isDirty).toBe(true)
+      })
+    })
+
+    describe("isTouched", () => {
+      it("should be false when no fields have been touched", () => {
+        const { meta } = useForm({ name: "", email: "" })
+
+        expect(meta.isTouched).toBe(false)
+      })
+
+      it("should be true after a field is focused", () => {
+        const { form, meta } = useForm({ name: "", email: "" })
+
+        form.name.$control.field.onFocus()
+
+        expect(meta.isTouched).toBe(true)
+      })
+
+      it("should remain true after touching multiple fields", () => {
+        const { form, meta } = useForm({ name: "", email: "" })
+
+        form.name.$control.field.onFocus()
+        form.email.$control.field.onFocus()
+
+        expect(meta.isTouched).toBe(true)
+      })
+    })
+
+    describe("isSubmitting", () => {
+      const schema = yup.object({ name: yup.string().required() })
+
+      it("should be false initially", () => {
+        const { meta } = useForm({ name: "" }, { validationSchema: schema })
+
+        expect(meta.isSubmitting).toBe(false)
+      })
+
+      it("should be true while a submit is in flight", async () => {
+        const { meta, handleSubmit } = useForm(
+          { name: "" },
+          { validationSchema: schema }
+        )
+        const submitPromise = handleSubmit()()
+
+        expect(meta.isSubmitting).toBe(true)
+
+        await submitPromise
+      })
+
+      it("should be false after submit completes", async () => {
+        const { meta, handleSubmit } = useForm(
+          { name: "" },
+          { validationSchema: schema }
+        )
+
+        await handleSubmit()()
+
+        expect(meta.isSubmitting).toBe(false)
+      })
+    })
+
+    describe("isSubmitted", () => {
+      const schema = yup.object({ name: yup.string().required() })
+
+      it("should be false initially", () => {
+        const { meta } = useForm({ name: "" }, { validationSchema: schema })
+
+        expect(meta.isSubmitted).toBe(false)
+      })
+
+      it("should be true after a successful submit", async () => {
+        const { meta, handleSubmit } = useForm(
+          { name: "John" },
+          { validationSchema: schema }
+        )
+
+        await handleSubmit()()
+
+        expect(meta.isSubmitted).toBe(true)
+      })
+
+      it("should be true after a failed submit", async () => {
+        const { meta, handleSubmit } = useForm(
+          { name: "" },
+          { validationSchema: schema }
+        )
+
+        await handleSubmit()()
+
+        expect(meta.isSubmitted).toBe(true)
+      })
+    })
+
+    describe("submitCount", () => {
+      const schema = yup.object({ name: yup.string().required() })
+
+      it("should be 0 initially", () => {
+        const { meta } = useForm({ name: "" }, { validationSchema: schema })
+
+        expect(meta.submitCount).toBe(0)
+      })
+
+      it("should increment on each submit", async () => {
+        const { meta, handleSubmit } = useForm(
+          { name: "" },
+          { validationSchema: schema }
+        )
+        const submit = handleSubmit()
+
+        await submit()
+        expect(meta.submitCount).toBe(1)
+
+        await submit()
+        expect(meta.submitCount).toBe(2)
+      })
+    })
+  })
+
+  describe("Concurrent validation", () => {
+    it("should discard stale validation results when a newer validation starts", async () => {
+      const schema = yup.object({
+        name: yup.string().required("Name is required")
+      })
+      const { form, validate } = useForm(
+        { name: "" },
+        { validationSchema: schema }
+      )
+
+      // Fire first validation (will fail — name is empty)
+      const first = validate()
+
+      // Before first resolves, fix value and fire second validation
+      form.name.$control.state = "John"
+      const second = validate()
+
+      // Wait for both to settle
+      await first
+      await second
+
+      // The second (valid) result should win — first result must be discarded
+      expect(form.name.$control.isValid).toBe(true)
+      expect(form.name.$control.errorMessages).toEqual([])
+    })
+
+    it("should discard stale field validation on concurrent blur", async () => {
+      const schema = yup.object({
+        name: yup.string().required("Name is required")
+      })
+      const { form } = useForm(
+        { name: "" },
+        { validationSchema: schema, validateOn: "blur" }
+      )
+
+      // First blur triggers validation while name is empty
+      form.name.$control.field.onFocus()
+      const firstBlur = form.name.$control.field.onBlur()
+
+      // Before first resolves, fix value and blur again
+      form.name.$control.state = "John"
+      form.name.$control.field.onFocus()
+      const secondBlur = form.name.$control.field.onBlur()
+
+      await firstBlur
+      await secondBlur
+
+      // Second (valid) result should win
+      expect(form.name.$control.isValid).toBe(true)
+      expect(form.name.$control.errorMessages).toEqual([])
+    })
+  })
+})
