@@ -371,7 +371,7 @@ describe("useForm", () => {
       const schema = yup.object({
         name: yup.string().required("Name is required")
       })
-      const { handleSubmit, errors } = useForm(
+      const { handleSubmit, meta } = useForm(
         { name: "" },
         { validationSchema: schema }
       )
@@ -386,7 +386,7 @@ describe("useForm", () => {
       expect(onError).toHaveBeenCalledWith({
         name: [{ message: "Name is required", path: ["name"] }]
       })
-      expect(errors.value.name).toBeDefined()
+      expect(meta.errors.name).toBeDefined()
     })
 
     it("should call onSuccess with state when no validation schema is provided", async () => {
@@ -559,17 +559,17 @@ describe("useForm", () => {
       })
 
       it("should not validate on state change, only on submit", async () => {
-        const { form, errors, handleSubmit } = useForm(
+        const { form, meta, handleSubmit } = useForm(
           { name: "default value" },
           { validationSchema: schema }
         )
         // Initially no errors
-        expect(errors.value.name).toBeUndefined()
+        expect(meta.errors.name).toBeUndefined()
 
         // Change value to invalid — should not trigger validation
         form.name.$control.state = ""
 
-        expect(errors.value.name).toEqual([])
+        expect(meta.errors.name).toEqual([])
 
         // Now submit — validation should run
         const onSuccess = vi.fn()
@@ -580,9 +580,9 @@ describe("useForm", () => {
 
         expect(onSuccess).not.toHaveBeenCalled()
         expect(onError).toHaveBeenCalled()
-        expect(errors.value.name).toBeDefined()
+        expect(meta.errors.name).toBeDefined()
         expect(
-          errors.value.name?.some(
+          meta.errors.name?.some(
             (issue) => issue.message === "Name is required"
           )
         ).toBe(true)
@@ -596,7 +596,7 @@ describe("useForm", () => {
       })
 
       it("should trigger validation when a field is blurred", async () => {
-        const { form, errors } = useForm(
+        const { form, meta } = useForm(
           { name: "", email: "" },
           { validationSchema: schema, validateOn: "blur" }
         )
@@ -606,8 +606,8 @@ describe("useForm", () => {
         await form.name.$control.field.onBlur()
 
         // Only the blurred field's errors should be written
-        expect(errors.value.name).toBeDefined()
-        expect(errors.value.email).toBeUndefined()
+        expect(meta.errors.name).toBeDefined()
+        expect(meta.errors.email).toBeUndefined()
       })
 
       it("should only show errors for touched fields via control", async () => {
@@ -761,6 +761,204 @@ describe("useForm", () => {
       expect(result).toBeUndefined()
       // Number schema will have different error
       expect(form.$control.isValid).toBe(false)
+    })
+  })
+
+  describe("meta", () => {
+    describe("isValid", () => {
+      const schema = yup.object({
+        name: yup.string().required("Name is required")
+      })
+
+      it("should be true before any validation has run", () => {
+        const { meta } = useForm({ name: "" }, { validationSchema: schema })
+
+        expect(meta.isValid).toBe(true)
+      })
+
+      it("should be false after validation fails", async () => {
+        const { meta, validate } = useForm(
+          { name: "" },
+          { validationSchema: schema }
+        )
+
+        await validate()
+
+        expect(meta.isValid).toBe(false)
+      })
+
+      it("should be true after validation succeeds", async () => {
+        const { meta, validate } = useForm(
+          { name: "John" },
+          { validationSchema: schema }
+        )
+
+        await validate()
+
+        expect(meta.isValid).toBe(true)
+      })
+
+      it("should become true again when errors are cleared after a state change", async () => {
+        const { form, meta, validate } = useForm(
+          { name: "" },
+          { validationSchema: schema }
+        )
+
+        await validate()
+        expect(meta.isValid).toBe(false)
+
+        form.name.$control.state = "John"
+        await validate()
+        expect(meta.isValid).toBe(true)
+      })
+    })
+
+    describe("isDirty", () => {
+      it("should be false when state matches default state", () => {
+        const { meta } = useForm({ name: "John" })
+
+        expect(meta.isDirty).toBe(false)
+      })
+
+      it("should be true after a field value changes", () => {
+        const { form, meta } = useForm({ name: "John" })
+
+        form.name.$control.state = "Jane"
+
+        expect(meta.isDirty).toBe(true)
+      })
+
+      it("should be false again after resetting to default state", () => {
+        const { form, meta } = useForm({ name: "John" })
+
+        form.name.$control.state = "Jane"
+        expect(meta.isDirty).toBe(true)
+
+        form.name.$control.reset()
+        expect(meta.isDirty).toBe(false)
+      })
+
+      it("should handle nested state changes", () => {
+        const { form, meta } = useForm({ user: { name: "John" } })
+
+        expect(meta.isDirty).toBe(false)
+        form.user.name.$control.state = "Jane"
+        expect(meta.isDirty).toBe(true)
+      })
+    })
+
+    describe("isTouched", () => {
+      it("should be false when no fields have been touched", () => {
+        const { meta } = useForm({ name: "", email: "" })
+
+        expect(meta.isTouched).toBe(false)
+      })
+
+      it("should be true after a field is focused", () => {
+        const { form, meta } = useForm({ name: "", email: "" })
+
+        form.name.$control.field.onFocus()
+
+        expect(meta.isTouched).toBe(true)
+      })
+
+      it("should remain true after touching multiple fields", () => {
+        const { form, meta } = useForm({ name: "", email: "" })
+
+        form.name.$control.field.onFocus()
+        form.email.$control.field.onFocus()
+
+        expect(meta.isTouched).toBe(true)
+      })
+    })
+
+    describe("isSubmitting", () => {
+      const schema = yup.object({ name: yup.string().required() })
+
+      it("should be false initially", () => {
+        const { meta } = useForm({ name: "" }, { validationSchema: schema })
+
+        expect(meta.isSubmitting).toBe(false)
+      })
+
+      it("should be true while a submit is in flight", async () => {
+        const { meta, handleSubmit } = useForm(
+          { name: "" },
+          { validationSchema: schema }
+        )
+        const submitPromise = handleSubmit()()
+
+        expect(meta.isSubmitting).toBe(true)
+
+        await submitPromise
+      })
+
+      it("should be false after submit completes", async () => {
+        const { meta, handleSubmit } = useForm(
+          { name: "" },
+          { validationSchema: schema }
+        )
+
+        await handleSubmit()()
+
+        expect(meta.isSubmitting).toBe(false)
+      })
+    })
+
+    describe("isSubmitted", () => {
+      const schema = yup.object({ name: yup.string().required() })
+
+      it("should be false initially", () => {
+        const { meta } = useForm({ name: "" }, { validationSchema: schema })
+
+        expect(meta.isSubmitted).toBe(false)
+      })
+
+      it("should be true after a successful submit", async () => {
+        const { meta, handleSubmit } = useForm(
+          { name: "John" },
+          { validationSchema: schema }
+        )
+
+        await handleSubmit()()
+
+        expect(meta.isSubmitted).toBe(true)
+      })
+
+      it("should be true after a failed submit", async () => {
+        const { meta, handleSubmit } = useForm(
+          { name: "" },
+          { validationSchema: schema }
+        )
+
+        await handleSubmit()()
+
+        expect(meta.isSubmitted).toBe(true)
+      })
+    })
+
+    describe("submitCount", () => {
+      const schema = yup.object({ name: yup.string().required() })
+
+      it("should be 0 initially", () => {
+        const { meta } = useForm({ name: "" }, { validationSchema: schema })
+
+        expect(meta.submitCount).toBe(0)
+      })
+
+      it("should increment on each submit", async () => {
+        const { meta, handleSubmit } = useForm(
+          { name: "" },
+          { validationSchema: schema }
+        )
+        const submit = handleSubmit()
+
+        await submit()
+        expect(meta.submitCount).toBe(1)
+
+        await submit()
+        expect(meta.submitCount).toBe(2)
+      })
     })
   })
 

@@ -14,6 +14,27 @@ export type ControlsCache = Map<string, InputControl<unknown>>
 export type FormErrors = Record<string, ValidationIssue[]>
 
 /**
+ * Reactive object exposing form-level state to consumers.
+ * Properties are backed by internal refs but surfaced as plain values via getters,
+ * so the object can be destructured without losing reactivity.
+ */
+export type FormMeta = {
+  errors: FormErrors
+  /** Whether the form has no validation errors. True before the first validation run. */
+  isValid: boolean
+  /** Whether the form's current state differs from its default state. */
+  isDirty: boolean
+  /** Whether any field in the form has been interacted with. */
+  isTouched: boolean
+  /** Whether a form submission is currently in flight. */
+  isSubmitting: boolean
+  /** Whether the form has been submitted at least once. */
+  isSubmitted: boolean
+  /** How many times the form has been submitted. */
+  submitCount: number
+}
+
+/**
  * Internal context shared across the form's control tree.
  * Contains all the core reactive state needed by form controls.
  */
@@ -78,6 +99,18 @@ export type FormContext<TState, TValidatedState = TState> = {
    */
   setAllFieldsAsTouched: () => void
   /**
+   * Object exposing form-level state such as validation errors and dirty/touched/validity flags.
+   */
+  meta: FormMeta
+  /**
+   * Marks the start of a submit attempt: sets isSubmitting and increments submitCount.
+   */
+  onSubmitStart: () => void
+  /**
+   * Marks the end of a submit attempt: clears isSubmitting and sets isSubmitted.
+   */
+  onSubmitEnd: () => void
+  /**
    * Handler to imperatively invoke the form's validation.
    * When successful returns the validated state, otherwise it returns undefined.
    */
@@ -134,9 +167,10 @@ export type FormRoot<TState, TValidatedState = TState> = {
    */
   form: FormNode<RequiredOrPrimitive<TState>>
   /**
-   * Object containing all of the validation errors for the form after some validation occurred.
+   * Reactive object exposing form-level state such as validation errors.
+   * Can be destructured safely — property access remains reactive.
    */
-  errors: Ref<FormErrors>
+  meta: FormMeta
   /**
    * Handler to imperatively invoke the form's validation.
    * When successful returns the validates tate, otherwise it returns undefined.

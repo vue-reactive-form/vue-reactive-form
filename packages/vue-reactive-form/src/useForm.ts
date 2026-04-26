@@ -12,7 +12,8 @@ export const useForm = <TState, TValidatedState = TState>(
   options: UseFormOptions<TState, TValidatedState> = {}
 ): FormRoot<TState, TValidatedState> => {
   const formContext = useFormContext(defaultState, options)
-  const { errors, validate } = formContext
+  const { validate, meta, setAllFieldsAsTouched, onSubmitStart, onSubmitEnd } =
+    formContext
 
   const form = createControlsTree(formContext)
 
@@ -22,21 +23,26 @@ export const useForm = <TState, TValidatedState = TState>(
     return async (event?: Event) => {
       event?.preventDefault()
 
-      formContext.setAllFieldsAsTouched()
+      setAllFieldsAsTouched()
+      onSubmitStart()
 
-      const validationResult = await validate()
+      try {
+        const validationResult = await validate()
 
-      if (validationResult) {
-        onSuccess?.(validationResult)
-      } else {
-        onError?.(errors.value)
+        if (validationResult) {
+          onSuccess?.(validationResult)
+        } else {
+          onError?.(meta.errors)
+        }
+      } finally {
+        onSubmitEnd()
       }
     }
   }
 
   return {
     form,
-    errors,
+    meta,
     validate,
     handleSubmit
   }

@@ -3,6 +3,7 @@ import type {
   ControlsCache,
   FormContext,
   FormErrors,
+  FormMeta,
   UseFormContextOptions
 } from "./types/useForm"
 import type { PartialOrPrimitive } from "./types/utils"
@@ -12,6 +13,7 @@ import {
   standardValidate,
   type ValidationIssue
 } from "./validation"
+import { isDirty } from "./utils"
 
 const getPathAsString = (path: PropertyPath) => {
   return Array.isArray(path) && path.length ? path.join(".") : ""
@@ -84,6 +86,33 @@ export const useFormContext = <TState, TValidatedState = TState>(
     }
   }
 
+  const submitting = ref(false)
+  const submitted = ref(false)
+  const submitCount = ref(0)
+
+  const onSubmitStart = () => {
+    submitting.value = true
+    submitCount.value++
+  }
+
+  const onSubmitEnd = () => {
+    submitting.value = false
+    submitted.value = true
+  }
+
+  const meta: FormMeta = {
+    get errors() { return errors.value },
+    set errors(v: FormErrors) { errors.value = v },
+    get isValid() {
+      return Object.values(errors.value).every((issues) => issues.length === 0)
+    },
+    get isDirty() { return isDirty(state.value, defaultFormState.value) },
+    get isTouched() { return touchedFields.value.size > 0 },
+    get isSubmitting() { return submitting.value },
+    get isSubmitted() { return submitted.value },
+    get submitCount() { return submitCount.value }
+  }
+
   let validationGeneration = 0
 
   const runValidation = async () => {
@@ -150,6 +179,9 @@ export const useFormContext = <TState, TValidatedState = TState>(
     setFieldErrors,
     setFieldAsTouched,
     setAllFieldsAsTouched,
+    onSubmitStart,
+    onSubmitEnd,
+    meta,
     getFieldState,
     getFieldErrors,
     isFieldTouched,
