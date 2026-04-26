@@ -8,7 +8,7 @@ import {
   type ValidProjectFormState
 } from "./demo-form"
 
-const { form, errors, handleSubmit } = useForm<
+const { form, meta, handleSubmit } = useForm<
   ProjectFormState,
   ValidProjectFormState
 >({}, { validationSchema: projectFormSchema, validateOn: "blur" })
@@ -156,7 +156,7 @@ const onSubmit = handleSubmit({
 
         <div class="inspector-section">
           <h2 class="section-title">Form errors inspector</h2>
-          <pre>{{ errors }}</pre>
+          <pre>{{ meta.errors }}</pre>
         </div>
       </div>
     </div>
