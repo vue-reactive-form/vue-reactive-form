@@ -257,7 +257,7 @@ describe("createInputControl", () => {
       control.field.onFocus()
       await control.field.onBlur()
 
-      expect(context.errors.value.name).toBeDefined()
+      expect(context.meta.errors.name).toBeDefined()
       expect(control.isValid).toBe(false)
       expect(control.errorMessages).toEqual(["Required"])
     })
@@ -277,7 +277,7 @@ describe("createInputControl", () => {
       await control.field.onBlur()
 
       // No validation should have run
-      expect(context.errors.value.name).toBeUndefined()
+      expect(context.meta.errors.name).toBeUndefined()
     })
 
     it("should only update errors for the blurred field", async () => {

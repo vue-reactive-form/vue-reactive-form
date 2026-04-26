@@ -2,7 +2,7 @@ import type { StandardSchemaV1 } from "@standard-schema/spec"
 import type { FormNode } from "./formNodes"
 import type { InputControl } from "./controls"
 import type { ValidationIssue } from "../validation"
-import type { Ref, MaybeRef } from "@vue/reactivity"
+import type { MaybeRef } from "@vue/reactivity"
 import type { RequiredOrPrimitive } from "./utils"
 import type { PropertyPath } from "lodash-es"
 
@@ -39,12 +39,6 @@ export type FormMeta = {
  * Contains all the core reactive state needed by form controls.
  */
 export type FormContext<TState, TValidatedState = TState> = {
-  /** The current form state */
-  state: Ref<TState>
-  /** The default/initial form state, used for dirty checking and reset */
-  defaultFormState: Ref<TState | undefined>
-  /** Form-wide validation errors keyed by path */
-  errors: Ref<FormErrors>
   /** Cache of input controls to avoid re-creating them */
   controlsCache: ControlsCache
   /**

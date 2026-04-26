@@ -171,9 +171,6 @@ export const useFormContext = <TState, TValidatedState = TState>(
   }
 
   return {
-    state,
-    defaultFormState,
-    errors,
     controlsCache,
     setFieldState,
     setFieldErrors,

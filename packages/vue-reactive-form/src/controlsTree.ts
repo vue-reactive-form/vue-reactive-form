@@ -1,5 +1,4 @@
 import { createArrayInputControl } from "./arrayInputControl"
-import { get } from "lodash-es"
 import type { InputControl } from "./types/controls"
 import type { FormContext } from "./types/useForm"
 
@@ -21,7 +20,6 @@ const getInputControl = (
 }
 
 export const createControlsTree = <TState, TValidatedState = TState>(context: FormContext<TState, TValidatedState>) => {
-  const { state: formState } = context
   const buildProxyHandler = (path: (string | number | symbol)[] = []) => ({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     get(target: any, handlerPath: string | number | symbol) {
@@ -29,7 +27,7 @@ export const createControlsTree = <TState, TValidatedState = TState>(context: Fo
 
       if (handlerPath === Symbol.iterator) {
         return function* () {
-          const array = get(formState.value, path) ?? []
+          const array = context.getFieldState(path, "current") ?? []
           for (let i = 0; i < array.length; i++) {
             const iteratorPath = [...path, i]
             target[i] = buildProxyControl(context, iteratorPath)
