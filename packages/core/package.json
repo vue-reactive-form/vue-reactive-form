@@ -1,0 +1,32 @@
+{
+  "name": "@nano-form/core",
+  "version": "0.1.0",
+  "description": "Framework-agnostic core for nano-form. Consumed by framework-specific packages, not directly by end users.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "test": "vitest",
+    "dev": "tsc --watch",
+    "build": "tsc"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@standard-schema/spec": "^1.0.0",
+    "lodash-es": "^4.17.21",
+    "ts-toolbelt": "^9.6.0"
+  },
+  "devDependencies": {
+    "@types/lodash-es": "^4.17.12",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4",
+    "yup": "^1.7.0"
+  }
+}

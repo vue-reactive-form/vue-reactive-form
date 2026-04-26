@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useForm } from "@vue-reactive-form/core"
+import { useForm } from "@nano-form/vue"
 import LabeledInput from "./components/LabeledInput.vue"
 import ArrayInput from "./components/ArrayInput.vue"
 import {
