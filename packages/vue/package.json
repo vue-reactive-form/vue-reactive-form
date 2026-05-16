@@ -1,0 +1,36 @@
+{
+  "name": "@nano-form/vue",
+  "version": "0.1.0",
+  "description": "Vue 3 adapter for nano-form.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "test": "vitest",
+    "dev": "tsc --watch",
+    "build": "tsc"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@nano-form/core": "workspace:*",
+    "@standard-schema/spec": "^1.0.0",
+    "lodash-es": "^4.17.21"
+  },
+  "devDependencies": {
+    "@types/lodash-es": "^4.17.12",
+    "@vue/reactivity": "^3.5.24",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4",
+    "yup": "^1.7.0"
+  },
+  "peerDependencies": {
+    "@vue/reactivity": "^3.4.0"
+  }
+}
