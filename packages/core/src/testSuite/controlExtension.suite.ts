@@ -1,10 +1,9 @@
 import { describe, it, expect } from "vitest"
 import * as yup from "yup"
 import { createUseForm } from "../useForm"
-import { testAdapter } from "./testAdapter"
+import type { ReactivityAdapter } from "../types/adapter"
 import type {
   BaseInputControl,
-  ControlExtension,
   CreateControlExtension,
   FieldBinding
 } from "../types/controls"
@@ -24,9 +23,10 @@ const captureExtension: CreateControlExtension = (control, binding) => ({
   _base: control
 })
 
+export const runControlExtensionTests = (adapter: ReactivityAdapter) => {
 describe("control extension mechanism", () => {
   it("does not add any extension properties when no factory is provided", () => {
-    const useForm = createUseForm(testAdapter)
+    const useForm = createUseForm(adapter)
     const { form } = useForm({ name: "John" })
 
     expect(form.name.$control._binding).toBeUndefined()
@@ -34,7 +34,7 @@ describe("control extension mechanism", () => {
   })
 
   it("merges every property returned by the factory onto each control", () => {
-    const useForm = createUseForm(testAdapter, captureExtension)
+    const useForm = createUseForm(adapter, captureExtension)
     const { form } = useForm({ name: "John" })
 
     expect(form.name.$control._binding).toBeDefined()
@@ -42,7 +42,7 @@ describe("control extension mechanism", () => {
   })
 
   it("passes a binding whose value reflects current state reactively", () => {
-    const useForm = createUseForm(testAdapter, captureExtension)
+    const useForm = createUseForm(adapter, captureExtension)
     const { form } = useForm({ name: "John" })
 
     const binding = form.name.$control._binding!
@@ -53,7 +53,7 @@ describe("control extension mechanism", () => {
   })
 
   it("passes a binding whose onChange updates the underlying state", () => {
-    const useForm = createUseForm(testAdapter, captureExtension)
+    const useForm = createUseForm(adapter, captureExtension)
     const { form } = useForm({ name: "John" })
 
     form.name.$control._binding!.onChange("Jane")
@@ -61,7 +61,7 @@ describe("control extension mechanism", () => {
   })
 
   it("passes a binding whose onFocus marks the field as touched", () => {
-    const useForm = createUseForm(testAdapter, captureExtension)
+    const useForm = createUseForm(adapter, captureExtension)
     const { form } = useForm({ name: "John" })
 
     expect(form.name.$control.touched).toBe(false)
@@ -71,7 +71,7 @@ describe("control extension mechanism", () => {
 
   it("passes a binding whose onBlur triggers validation when validateOn is 'blur'", async () => {
     const schema = yup.object({ name: yup.string().required("Required") })
-    const useForm = createUseForm(testAdapter, captureExtension)
+    const useForm = createUseForm(adapter, captureExtension)
     const { form, meta } = useForm(
       { name: "" },
       { validationSchema: schema, validateOn: "blur" }
@@ -83,7 +83,7 @@ describe("control extension mechanism", () => {
 
   it("passes a binding whose onBlur is a no-op when validateOn is 'submit'", async () => {
     const schema = yup.object({ name: yup.string().required("Required") })
-    const useForm = createUseForm(testAdapter, captureExtension)
+    const useForm = createUseForm(adapter, captureExtension)
     const { form, meta } = useForm(
       { name: "" },
       { validationSchema: schema, validateOn: "submit" }
@@ -94,7 +94,7 @@ describe("control extension mechanism", () => {
   })
 
   it("hands the factory a base control whose getters track state changes", () => {
-    const useForm = createUseForm(testAdapter, captureExtension)
+    const useForm = createUseForm(adapter, captureExtension)
     const { form } = useForm({ name: "John" })
 
     const base = form.name.$control._base!
@@ -108,7 +108,7 @@ describe("control extension mechanism", () => {
 
   it("preserves getters defined on the extension via defineProperties", () => {
     let reads = 0
-    const useForm = createUseForm(testAdapter, (_control, binding) => ({
+    const useForm = createUseForm(adapter, (_control, binding) => ({
       get _binding() {
         reads++
         return binding
@@ -123,7 +123,7 @@ describe("control extension mechanism", () => {
   })
 
   it("applies the extension to array controls as well", () => {
-    const useForm = createUseForm(testAdapter, captureExtension)
+    const useForm = createUseForm(adapter, captureExtension)
     const { form } = useForm({ tags: ["a", "b"] })
 
     expect(form.tags.$control._binding).toBeDefined()
@@ -131,9 +131,10 @@ describe("control extension mechanism", () => {
   })
 
   it("doesn't leak the binding onto BaseInputControl when no factory is provided", () => {
-    const useForm = createUseForm(testAdapter)
+    const useForm = createUseForm(adapter)
     const { form } = useForm({ name: "John" })
 
-    expect((form.name.$control as Record<string, unknown>).binding).toBeUndefined()
+    expect((form.name.$control as unknown as Record<string, unknown>).binding).toBeUndefined()
   })
 })
+}

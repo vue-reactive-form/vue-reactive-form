@@ -2,12 +2,13 @@ import { describe, it, expect } from "vitest"
 import * as yup from "yup"
 import { createInputControl } from "../inputControl"
 import { useFormContext } from "../useFormContext"
-import { testAdapter } from "./testAdapter"
+import type { ReactivityAdapter } from "../types/adapter"
 
+export const runInputControlTests = (adapter: ReactivityAdapter) => {
 describe("createInputControl", () => {
   describe("When state is a primitive", () => {
     it("should expose the correct initial state and defaultValue", () => {
-      const context = useFormContext(testAdapter, "bar")
+      const context = useFormContext(adapter, "bar")
       const control = createInputControl(context)
 
       expect(control.state).toBe("bar")
@@ -16,7 +17,7 @@ describe("createInputControl", () => {
     })
 
     it("should handle state changes and dirty detection", () => {
-      const context = useFormContext(testAdapter, "bar")
+      const context = useFormContext(adapter, "bar")
       const control = createInputControl(context)
 
       control.state = "baz"
@@ -25,7 +26,7 @@ describe("createInputControl", () => {
     })
 
     it("should reset to default value and clear dirty state", () => {
-      const context = useFormContext(testAdapter, "bar")
+      const context = useFormContext(adapter, "bar")
       const { setFieldState } = context
       setFieldState([], "baz", "current")
       const control = createInputControl(context)
@@ -39,7 +40,7 @@ describe("createInputControl", () => {
     })
 
     it("should clear the value and set dirty to true", () => {
-      const context = useFormContext(testAdapter, "bar")
+      const context = useFormContext(adapter, "bar")
       const control = createInputControl(context)
 
       control.clear()
@@ -48,7 +49,7 @@ describe("createInputControl", () => {
     })
 
     it("should update the default value", () => {
-      const context = useFormContext(testAdapter, "bar")
+      const context = useFormContext(adapter, "bar")
       const control = createInputControl(context)
 
       control.updateDefaultState("qux")
@@ -61,7 +62,7 @@ describe("createInputControl", () => {
     })
 
     it("should handle undefined initial values", () => {
-      const context = useFormContext(testAdapter, undefined)
+      const context = useFormContext(adapter, undefined)
 
       const control = createInputControl(context)
 
@@ -75,7 +76,7 @@ describe("createInputControl", () => {
     })
 
     it("should handle setting default state to undefined", () => {
-      const context = useFormContext(testAdapter, "bar")
+      const context = useFormContext(adapter, "bar")
       const control = createInputControl(context)
 
       expect(control.dirty).toBe(false)
@@ -91,7 +92,7 @@ describe("createInputControl", () => {
 
     describe("validation properties", () => {
       it("should report isValid as true when there are no errors", () => {
-        const context = useFormContext(testAdapter, "valid value")
+        const context = useFormContext(adapter, "valid value")
         const control = createInputControl(context)
 
         expect(control.isValid).toBe(true)
@@ -103,7 +104,7 @@ describe("createInputControl", () => {
           .string()
           .required("Value is required")
           .min(3, "Value must be at least 3 characters")
-        const context = useFormContext(testAdapter, "", { validationSchema: schema })
+        const context = useFormContext(adapter, "", { validationSchema: schema })
         const control = createInputControl(context)
 
         await context.validate()
@@ -117,7 +118,7 @@ describe("createInputControl", () => {
 
       it("should react to changes in the errors state", async () => {
         const schema = yup.string().required("This field is invalid")
-        const context = useFormContext(testAdapter, "", { validationSchema: schema })
+        const context = useFormContext(adapter, "", { validationSchema: schema })
         const control = createInputControl(context)
 
         expect(control.isValid).toBe(true)
@@ -139,7 +140,7 @@ describe("createInputControl", () => {
 
       it("should clear error messages when updating the state", async () => {
         const schema = yup.string().required("Some error")
-        const context = useFormContext(testAdapter, "", { validationSchema: schema })
+        const context = useFormContext(adapter, "", { validationSchema: schema })
         const control = createInputControl(context)
 
         await context.validate()
@@ -155,7 +156,7 @@ describe("createInputControl", () => {
       })
 
       it("should handle empty errors object gracefully", () => {
-        const context = useFormContext(testAdapter, "some value")
+        const context = useFormContext(adapter, "some value")
 
         const control = createInputControl(context)
 
@@ -165,7 +166,7 @@ describe("createInputControl", () => {
 
       it("should report isValid as true after successful validation", async () => {
         const schema = yup.string().required()
-        const context = useFormContext(testAdapter, "valid value", {
+        const context = useFormContext(adapter, "valid value", {
           validationSchema: schema
         })
         const control = createInputControl(context)
@@ -179,14 +180,14 @@ describe("createInputControl", () => {
 
     describe("touched state", () => {
       it("should initially be untouched", () => {
-        const context = useFormContext(testAdapter, "bar")
+        const context = useFormContext(adapter, "bar")
         const control = createInputControl(context)
 
         expect(control.touched).toBe(false)
       })
 
       it("should become touched after calling setAsTouched", () => {
-        const context = useFormContext(testAdapter, "bar")
+        const context = useFormContext(adapter, "bar")
         const control = createInputControl(context)
 
         expect(control.touched).toBe(false)
@@ -197,7 +198,7 @@ describe("createInputControl", () => {
       })
 
       it("should remain touched after multiple setAsTouched calls", () => {
-        const context = useFormContext(testAdapter, "bar")
+        const context = useFormContext(adapter, "bar")
         const control = createInputControl(context)
 
         control.setAsTouched()
@@ -207,7 +208,7 @@ describe("createInputControl", () => {
       })
 
       it("should remain touched after state changes", () => {
-        const context = useFormContext(testAdapter, "bar")
+        const context = useFormContext(adapter, "bar")
         const control = createInputControl(context)
 
         control.setAsTouched()
@@ -219,7 +220,7 @@ describe("createInputControl", () => {
       })
 
       it("should remain touched after reset", () => {
-        const context = useFormContext(testAdapter, "bar")
+        const context = useFormContext(adapter, "bar")
         const control = createInputControl(context)
 
         control.setAsTouched()
@@ -230,7 +231,7 @@ describe("createInputControl", () => {
       })
 
       it("should remain touched after clear", () => {
-        const context = useFormContext(testAdapter, "bar")
+        const context = useFormContext(adapter, "bar")
         const control = createInputControl(context)
 
         control.setAsTouched()
@@ -244,7 +245,7 @@ describe("createInputControl", () => {
   describe("validate", () => {
     it("should trigger validation for the field", async () => {
       const context = useFormContext(
-        testAdapter,
+        adapter,
         { name: "" },
         {
           validationSchema: yup.object({
@@ -264,7 +265,7 @@ describe("createInputControl", () => {
 
     it("should only update errors for the validated field", async () => {
       const context = useFormContext(
-        testAdapter,
+        adapter,
         { name: "", age: 30 },
         {
           validationSchema: yup.object({
@@ -287,7 +288,7 @@ describe("createInputControl", () => {
 
     it("should clear errors when validation passes after fix", async () => {
       const context = useFormContext(
-        testAdapter,
+        adapter,
         { name: "" },
         {
           validationSchema: yup.object({
@@ -310,7 +311,7 @@ describe("createInputControl", () => {
 
   describe("When state is an object", () => {
     it("should expose the correct initial state and defaultValue", () => {
-      const context = useFormContext(testAdapter, { name: "John", age: 30 })
+      const context = useFormContext(adapter, { name: "John", age: 30 })
       const control = createInputControl(context)
 
       expect(control.state).toEqual({ name: "John", age: 30 })
@@ -319,7 +320,7 @@ describe("createInputControl", () => {
     })
 
     it("should handle state changes and dirty detection", () => {
-      const context = useFormContext(testAdapter, { name: "John", age: 30 })
+      const context = useFormContext(adapter, { name: "John", age: 30 })
       const control = createInputControl(context)
 
       control.state = { name: "Jane", age: 25 }
@@ -328,7 +329,7 @@ describe("createInputControl", () => {
     })
 
     it("should handle state overrides with partial objects, deleting all properties not passed in the new state", () => {
-      const context = useFormContext(testAdapter, { name: "John", age: 30 })
+      const context = useFormContext(adapter, { name: "John", age: 30 })
       const control = createInputControl(context)
 
       control.state = { name: "Jane" }
@@ -337,7 +338,7 @@ describe("createInputControl", () => {
     })
 
     it("should reset to default value and clear dirty state", () => {
-      const context = useFormContext(testAdapter, { name: "John", age: 30 })
+      const context = useFormContext(adapter, { name: "John", age: 30 })
       const control = createInputControl(context)
 
       control.state = { name: "Jane", age: 25 }
@@ -349,7 +350,7 @@ describe("createInputControl", () => {
     })
 
     it("should clear the value and set dirty to true", () => {
-      const context = useFormContext(testAdapter, { name: "John", age: 30 })
+      const context = useFormContext(adapter, { name: "John", age: 30 })
       const control = createInputControl(context)
 
       control.clear()
@@ -358,7 +359,7 @@ describe("createInputControl", () => {
     })
 
     it("should update the default value", () => {
-      const context = useFormContext(testAdapter, { name: "John", age: 30 })
+      const context = useFormContext(adapter, { name: "John", age: 30 })
       const control = createInputControl(context)
 
       const newDefault = { name: "Bob", age: 40 }
@@ -372,7 +373,7 @@ describe("createInputControl", () => {
     })
 
     it("should handle nested objects", () => {
-      const context = useFormContext(testAdapter, {
+      const context = useFormContext(adapter, {
         user: { profile: { name: "John" } }
       })
 
@@ -390,7 +391,7 @@ describe("createInputControl", () => {
     })
 
     it("should handle deeply nested object changes", () => {
-      const context = useFormContext(testAdapter, {
+      const context = useFormContext(adapter, {
         level1: { level2: { value: 42 } }
       })
 
@@ -405,7 +406,7 @@ describe("createInputControl", () => {
     })
 
     it("should handle arrays nested in object state", () => {
-      const context = useFormContext(testAdapter, {
+      const context = useFormContext(adapter, {
         user: {
           name: "John",
           hobbies: ["reading", "swimming"]
@@ -426,7 +427,7 @@ describe("createInputControl", () => {
     })
 
     it("should handle setting default state to undefined", () => {
-      const context = useFormContext(testAdapter, { name: "John", age: 30 })
+      const context = useFormContext(adapter, { name: "John", age: 30 })
 
       const control = createInputControl(context)
 
@@ -448,7 +449,7 @@ describe("createInputControl", () => {
           age: yup.number().required().min(0)
         })
         const context = useFormContext(
-          testAdapter,
+          adapter,
           { name: "", age: 30 },
           { validationSchema: schema }
         )
@@ -477,7 +478,7 @@ describe("createInputControl", () => {
           })
         })
         const context = useFormContext(
-          testAdapter,
+          adapter,
           {
             user: {
               profile: {
@@ -518,7 +519,7 @@ describe("createInputControl", () => {
           })
         })
         const context = useFormContext(
-          testAdapter,
+          adapter,
           { user: { name: "Jo" } },
           { validationSchema: schema }
         )
@@ -544,7 +545,7 @@ describe("createInputControl", () => {
 
     describe("touched state for object paths", () => {
       it("should initially be untouched for nested paths", () => {
-        const context = useFormContext(testAdapter, { name: "John", age: 30 })
+        const context = useFormContext(adapter, { name: "John", age: 30 })
         const nameControl = createInputControl(context, ["name"])
         const ageControl = createInputControl(context, ["age"])
 
@@ -553,7 +554,7 @@ describe("createInputControl", () => {
       })
 
       it("should touch only the specific nested field", () => {
-        const context = useFormContext(testAdapter, { name: "John", age: 30 })
+        const context = useFormContext(adapter, { name: "John", age: 30 })
         const nameControl = createInputControl(context, ["name"])
         const ageControl = createInputControl(context, ["age"])
 
@@ -564,7 +565,7 @@ describe("createInputControl", () => {
       })
 
       it("should handle deeply nested paths independently", () => {
-        const context = useFormContext(testAdapter, {
+        const context = useFormContext(adapter, {
           user: {
             profile: { name: "John" },
             settings: { theme: "dark" }
@@ -593,7 +594,7 @@ describe("createInputControl", () => {
       })
 
       it("should remain touched after state changes on nested path", () => {
-        const context = useFormContext(testAdapter, { name: "John", age: 30 })
+        const context = useFormContext(adapter, { name: "John", age: 30 })
         const nameControl = createInputControl(context, ["name"])
 
         nameControl.setAsTouched()
@@ -603,7 +604,7 @@ describe("createInputControl", () => {
       })
 
       it("should remain touched after reset on nested path", () => {
-        const context = useFormContext(testAdapter, { name: "John", age: 30 })
+        const context = useFormContext(adapter, { name: "John", age: 30 })
         const nameControl = createInputControl(context, ["name"])
 
         nameControl.setAsTouched()
@@ -618,7 +619,7 @@ describe("createInputControl", () => {
 
   describe("When state is an array", () => {
     it("should expose the correct initial state and defaultValue", () => {
-      const context = useFormContext(testAdapter, [1, 2, 3])
+      const context = useFormContext(adapter, [1, 2, 3])
       const control = createInputControl(context)
 
       expect(control.state).toEqual([1, 2, 3])
@@ -627,7 +628,7 @@ describe("createInputControl", () => {
     })
 
     it("should handle state changes and dirty detection", () => {
-      const context = useFormContext(testAdapter, [1, 2, 3])
+      const context = useFormContext(adapter, [1, 2, 3])
       const control = createInputControl(context)
 
       control.state = [1, 2, 4]
@@ -636,7 +637,7 @@ describe("createInputControl", () => {
     })
 
     it("should reset to default value and clear dirty state", () => {
-      const context = useFormContext(testAdapter, [1, 2, 3])
+      const context = useFormContext(adapter, [1, 2, 3])
       const control = createInputControl(context)
 
       control.state = [1, 2, 4]
@@ -648,7 +649,7 @@ describe("createInputControl", () => {
     })
 
     it("should clear the value and set dirty to true", () => {
-      const context = useFormContext(testAdapter, [1, 2, 3])
+      const context = useFormContext(adapter, [1, 2, 3])
       const control = createInputControl(context)
 
       control.clear()
@@ -657,7 +658,7 @@ describe("createInputControl", () => {
     })
 
     it("should update the default value", () => {
-      const context = useFormContext(testAdapter, [1, 2, 3])
+      const context = useFormContext(adapter, [1, 2, 3])
       const control = createInputControl(context)
 
       const newDefault = [4, 5, 6]
@@ -671,7 +672,7 @@ describe("createInputControl", () => {
     })
 
     it("should handle array element access", () => {
-      const context = useFormContext(testAdapter, [1, 2, 3])
+      const context = useFormContext(adapter, [1, 2, 3])
       const control = createInputControl(context, [0])
 
       expect(control.state).toBe(1)
@@ -691,7 +692,7 @@ describe("createInputControl", () => {
     })
 
     it("should handle nested arrays", () => {
-      const context = useFormContext(testAdapter, [
+      const context = useFormContext(adapter, [
         [1, 2],
         [3, 4]
       ])
@@ -719,7 +720,7 @@ describe("createInputControl", () => {
     })
 
     it("should handle nested array element access", () => {
-      const context = useFormContext(testAdapter, [
+      const context = useFormContext(adapter, [
         [1, 2],
         [3, 4]
       ])
@@ -739,7 +740,7 @@ describe("createInputControl", () => {
     })
 
     it("should handle array of objects", () => {
-      const context = useFormContext(testAdapter, [{ a: 1 }, { a: 2 }])
+      const context = useFormContext(adapter, [{ a: 1 }, { a: 2 }])
       const control = createInputControl(context)
 
       expect(control.state).toEqual([{ a: 1 }, { a: 2 }])
@@ -754,7 +755,7 @@ describe("createInputControl", () => {
     })
 
     it("should handle object property within array", () => {
-      const context = useFormContext(testAdapter, [{ a: 1 }, { a: 2 }])
+      const context = useFormContext(adapter, [{ a: 1 }, { a: 2 }])
       const control = createInputControl(context, [1, "a"])
 
       expect(control.state).toBe(2)
@@ -770,7 +771,7 @@ describe("createInputControl", () => {
     })
 
     it("should handle setting default state to undefined", () => {
-      const context = useFormContext(testAdapter, [1, 2, 3])
+      const context = useFormContext(adapter, [1, 2, 3])
       const control = createInputControl(context)
 
       expect(control.dirty).toBe(false)
@@ -789,7 +790,7 @@ describe("createInputControl", () => {
         const schema = yup
           .array()
           .of(yup.string().min(5, "Item must be at least 5 characters"))
-        const context = useFormContext(testAdapter, ["apple", "no", "cherry"], {
+        const context = useFormContext(adapter, ["apple", "no", "cherry"], {
           validationSchema: schema
         })
 
@@ -819,7 +820,7 @@ describe("createInputControl", () => {
           })
         )
         const context = useFormContext(
-          testAdapter,
+          adapter,
           [
             { name: "", age: 30 },
             { name: "Jane", age: -5 }
@@ -851,7 +852,7 @@ describe("createInputControl", () => {
         const schema = yup
           .array()
           .of(yup.string().min(3, "Item too short"))
-        const context = useFormContext(testAdapter, ["aaa", "bb", "ccc"], {
+        const context = useFormContext(adapter, ["aaa", "bb", "ccc"], {
           validationSchema: schema
         })
         const middleItemControl = createInputControl(context, [1])
@@ -882,7 +883,7 @@ describe("createInputControl", () => {
               .min(2, "Name must be at least 2 characters")
           })
         )
-        const context = useFormContext(testAdapter, [{ name: "" }], {
+        const context = useFormContext(adapter, [{ name: "" }], {
           validationSchema: schema
         })
 
@@ -899,7 +900,7 @@ describe("createInputControl", () => {
 
     describe("touched state for array paths", () => {
       it("should initially be untouched for array elements", () => {
-        const context = useFormContext(testAdapter, [1, 2, 3])
+        const context = useFormContext(adapter, [1, 2, 3])
         const firstControl = createInputControl(context, [0])
         const secondControl = createInputControl(context, [1])
 
@@ -908,7 +909,7 @@ describe("createInputControl", () => {
       })
 
       it("should touch only the specific array element", () => {
-        const context = useFormContext(testAdapter, [1, 2, 3])
+        const context = useFormContext(adapter, [1, 2, 3])
         const firstControl = createInputControl(context, [0])
         const secondControl = createInputControl(context, [1])
 
@@ -919,7 +920,7 @@ describe("createInputControl", () => {
       })
 
       it("should handle touched state for objects within arrays", () => {
-        const context = useFormContext(testAdapter, [
+        const context = useFormContext(adapter, [
           { name: "John", age: 30 },
           { name: "Jane", age: 25 }
         ])
@@ -935,7 +936,7 @@ describe("createInputControl", () => {
       })
 
       it("should remain touched after state changes on array element", () => {
-        const context = useFormContext(testAdapter, [1, 2, 3])
+        const context = useFormContext(adapter, [1, 2, 3])
         const firstControl = createInputControl(context, [0])
 
         firstControl.setAsTouched()
@@ -945,7 +946,7 @@ describe("createInputControl", () => {
       })
 
       it("should remain touched after reset on array element", () => {
-        const context = useFormContext(testAdapter, [1, 2, 3])
+        const context = useFormContext(adapter, [1, 2, 3])
         const firstControl = createInputControl(context, [0])
 
         firstControl.setAsTouched()
@@ -958,3 +959,4 @@ describe("createInputControl", () => {
     })
   })
 })
+}

@@ -7,6 +7,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./testSuite": {
+      "types": "./dist/testSuite/index.d.ts",
+      "import": "./dist/testSuite/index.js"
     }
   },
   "files": [
@@ -28,5 +32,17 @@
     "typescript": "^5.9.2",
     "vitest": "^3.2.4",
     "yup": "^1.7.0"
+  },
+  "peerDependencies": {
+    "vitest": "^3.0.0",
+    "yup": "^1.0.0"
+  },
+  "peerDependenciesMeta": {
+    "vitest": {
+      "optional": true
+    },
+    "yup": {
+      "optional": true
+    }
   }
 }

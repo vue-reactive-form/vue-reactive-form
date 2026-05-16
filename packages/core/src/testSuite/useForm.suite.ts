@@ -1,9 +1,10 @@
 import { describe, it, expect, vi } from "vitest"
 import { createUseForm } from "../useForm"
 import * as yup from "yup"
-import { testAdapter } from "./testAdapter"
+import type { ReactivityAdapter } from "../types/adapter"
 
-const useForm = createUseForm(testAdapter)
+export const runUseFormTests = (adapter: ReactivityAdapter) => {
+const useForm = createUseForm(adapter)
 
 describe("useForm", () => {
   describe("Controls tree navigation", () => {
@@ -940,3 +941,4 @@ describe("useForm", () => {
 
   })
 })
+}

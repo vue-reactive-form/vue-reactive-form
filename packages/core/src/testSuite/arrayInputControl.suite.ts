@@ -1,12 +1,13 @@
 import { describe, it, expect } from "vitest"
 import { useFormContext } from "../useFormContext"
 import { createArrayInputControl } from "../arrayInputControl"
-import { testAdapter } from "./testAdapter"
+import type { ReactivityAdapter } from "../types/adapter"
 
+export const runArrayInputControlTests = (adapter: ReactivityAdapter) => {
 describe("createArrayInputControl", () => {
   describe("add method", () => {
     it("should add an item with a default value to the array", () => {
-      const context = useFormContext(testAdapter, [1, 2, 3])
+      const context = useFormContext(adapter, [1, 2, 3])
 
       const control = createArrayInputControl(context)
 
@@ -16,7 +17,7 @@ describe("createArrayInputControl", () => {
     })
 
     it("should add an item without a default value (undefined) to the array", () => {
-      const context = useFormContext(testAdapter, [1, 2, 3])
+      const context = useFormContext(adapter, [1, 2, 3])
 
       const control = createArrayInputControl(context)
 
@@ -26,7 +27,7 @@ describe("createArrayInputControl", () => {
     })
 
     it("should add objects to an array", () => {
-      const context = useFormContext(testAdapter, [{ name: "John" }, { name: "Jane" }])
+      const context = useFormContext(adapter, [{ name: "John" }, { name: "Jane" }])
 
       const control = createArrayInputControl(context)
 
@@ -40,7 +41,7 @@ describe("createArrayInputControl", () => {
     })
 
     it("should add empty object to an array", () => {
-      const context = useFormContext(testAdapter, [{ name: "John" }, { name: "Jane" }])
+      const context = useFormContext(adapter, [{ name: "John" }, { name: "Jane" }])
 
       const control = createArrayInputControl(context)
 
@@ -54,7 +55,7 @@ describe("createArrayInputControl", () => {
     })
 
     it("should handle adding to an empty array", () => {
-      const context = useFormContext(testAdapter, [])
+      const context = useFormContext(adapter, [])
 
       const control = createArrayInputControl(context)
 
@@ -64,7 +65,7 @@ describe("createArrayInputControl", () => {
     })
 
     it("should handle adding when state is undefined", () => {
-      const context = useFormContext(testAdapter, undefined)
+      const context = useFormContext(adapter, undefined)
 
       const control = createArrayInputControl(context)
 
@@ -75,7 +76,7 @@ describe("createArrayInputControl", () => {
 
   describe("remove method", () => {
     it("should remove an item at the specified index", () => {
-      const context = useFormContext(testAdapter, [1, 2, 3, 4])
+      const context = useFormContext(adapter, [1, 2, 3, 4])
 
       const control = createArrayInputControl(context)
 
@@ -85,7 +86,7 @@ describe("createArrayInputControl", () => {
     })
 
     it("should remove the first item", () => {
-      const context = useFormContext(testAdapter, ["a", "b", "c"])
+      const context = useFormContext(adapter, ["a", "b", "c"])
 
       const control = createArrayInputControl(context)
 
@@ -95,7 +96,7 @@ describe("createArrayInputControl", () => {
     })
 
     it("should remove the last item", () => {
-      const context = useFormContext(testAdapter, ["a", "b", "c"])
+      const context = useFormContext(adapter, ["a", "b", "c"])
 
       const control = createArrayInputControl(context)
 
@@ -105,7 +106,7 @@ describe("createArrayInputControl", () => {
     })
 
     it("should remove objects from an array", () => {
-      const context = useFormContext(testAdapter, [
+      const context = useFormContext(adapter, [
         { id: 1, name: "John" },
         { id: 2, name: "Jane" },
         { id: 3, name: "Bob" }
@@ -122,7 +123,7 @@ describe("createArrayInputControl", () => {
     })
 
     it("should handle removing from a single-item array", () => {
-      const context = useFormContext(testAdapter, ["only item"])
+      const context = useFormContext(adapter, ["only item"])
 
       const control = createArrayInputControl(context)
 
@@ -132,7 +133,7 @@ describe("createArrayInputControl", () => {
     })
 
     it("should handle removing when state is undefined", () => {
-      const context = useFormContext(testAdapter, undefined)
+      const context = useFormContext(adapter, undefined)
 
       const control = createArrayInputControl(context)
 
@@ -144,7 +145,7 @@ describe("createArrayInputControl", () => {
 
   describe("moveItem method", () => {
     it("should move an item from one index to another", () => {
-      const context = useFormContext(testAdapter, ["a", "b", "c", "d"])
+      const context = useFormContext(adapter, ["a", "b", "c", "d"])
 
       const control = createArrayInputControl(context)
 
@@ -154,7 +155,7 @@ describe("createArrayInputControl", () => {
     })
 
     it("should move an item forward in the array", () => {
-      const context = useFormContext(testAdapter, [1, 2, 3, 4, 5])
+      const context = useFormContext(adapter, [1, 2, 3, 4, 5])
 
       const control = createArrayInputControl(context)
 
@@ -164,7 +165,7 @@ describe("createArrayInputControl", () => {
     })
 
     it("should move an item backward in the array", () => {
-      const context = useFormContext(testAdapter, [1, 2, 3, 4, 5])
+      const context = useFormContext(adapter, [1, 2, 3, 4, 5])
 
       const control = createArrayInputControl(context)
 
@@ -174,7 +175,7 @@ describe("createArrayInputControl", () => {
     })
 
     it("should handle moving to the same index (no change)", () => {
-      const context = useFormContext(testAdapter, ["a", "b", "c"])
+      const context = useFormContext(adapter, ["a", "b", "c"])
 
       const control = createArrayInputControl(context)
 
@@ -184,7 +185,7 @@ describe("createArrayInputControl", () => {
     })
 
     it("should not be dirty when mutations restore the original state", () => {
-      const context = useFormContext(testAdapter, ["a", "b", "c"])
+      const context = useFormContext(adapter, ["a", "b", "c"])
 
       const control = createArrayInputControl(context)
 
@@ -204,7 +205,7 @@ describe("createArrayInputControl", () => {
     })
 
     it("should move objects in an array", () => {
-      const context = useFormContext(testAdapter, [
+      const context = useFormContext(adapter, [
         { id: 1, name: "John" },
         { id: 2, name: "Jane" },
         { id: 3, name: "Bob" }
@@ -222,7 +223,7 @@ describe("createArrayInputControl", () => {
     })
 
     it("should clamp indices to array bounds", () => {
-      const context = useFormContext(testAdapter, ["a", "b", "c"])
+      const context = useFormContext(adapter, ["a", "b", "c"])
 
       const control = createArrayInputControl(context)
 
@@ -233,7 +234,7 @@ describe("createArrayInputControl", () => {
     })
 
     it("should handle moving in a two-element array", () => {
-      const context = useFormContext(testAdapter, ["first", "second"])
+      const context = useFormContext(adapter, ["first", "second"])
 
       const control = createArrayInputControl(context)
 
@@ -243,7 +244,7 @@ describe("createArrayInputControl", () => {
     })
 
     it("should handle moving when state is undefined", () => {
-      const context = useFormContext(testAdapter, undefined)
+      const context = useFormContext(adapter, undefined)
 
       const control = createArrayInputControl(context)
 
@@ -253,3 +254,4 @@ describe("createArrayInputControl", () => {
     })
   })
 })
+}
