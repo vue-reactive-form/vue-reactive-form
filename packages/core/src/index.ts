@@ -12,7 +12,10 @@ export type {
 } from "./types/useForm"
 export type {
   ArrayInputControl,
-  FieldProps,
+  BaseInputControl,
+  ControlExtension,
+  CreateControlExtension,
+  FieldBinding,
   InputControl
 } from "./types/controls"
 export type { FormNode, ArrayFormNode } from "./types/formNodes"

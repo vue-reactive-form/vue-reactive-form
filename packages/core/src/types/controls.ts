@@ -1,23 +1,34 @@
 import type { PartialOrPrimitive } from "./utils"
 
 /**
- * Props meant to be bound to the input component with v-bind.
- * Includes modelValue + onUpdate:modelValue for two-way binding,
- * onFocus (marks as touched), and onBlur (triggers validation when validateOn is "blur").
+ * Framework-agnostic binding passed by the core to the extension factory.
+ * Adapter authors use this to produce framework-specific props.
  */
-export type FieldProps<T> = {
-  readonly modelValue: PartialOrPrimitive<T> | undefined
-  readonly "onUpdate:modelValue": (value: PartialOrPrimitive<T> | undefined) => void
+export type FieldBinding<T> = {
+  readonly value: PartialOrPrimitive<T> | undefined
+  readonly onChange: (value: PartialOrPrimitive<T> | undefined) => void
   readonly onFocus: () => void
-  readonly onBlur: () => void
+  readonly onBlur: () => void | Promise<void>
 }
 
 /**
- * Control of a node inside a form, with the give type.
+ * Augmentation slot for framework-specific control properties.
+ * Framework packages add properties via `declare module` interface merging.
  *
- * Allows access to the state management for the node, and metadata describing its status.
+ * @example
+ * declare module "@nano-form/core" {
+ *   interface ControlExtension<T> {
+ *     field: VueFieldProps<T>
+ *   }
+ * }
  */
-export type InputControl<T> = {
+export interface ControlExtension<T> {}
+
+/**
+ * Framework-agnostic base shape produced by the core for every control.
+ * Framework-specific properties (e.g. `field`) are added via ControlExtension.
+ */
+export type BaseInputControl<T> = {
   state: PartialOrPrimitive<T> | undefined
   readonly defaultState: PartialOrPrimitive<T> | undefined
   readonly dirty: boolean
@@ -29,16 +40,31 @@ export type InputControl<T> = {
   updateDefaultState: (newDefaultValue?: PartialOrPrimitive<T>) => void
   setAsTouched: () => void
   validate: () => Promise<void>
-  readonly field: FieldProps<T>
 }
 
 /**
- * Control of an array node inside a form, with the give type.
+ * Control of a node inside a form. Combines the core BaseInputControl<T>
+ * with any framework-specific augmentations declared in ControlExtension<T>.
+ */
+export type InputControl<T> = BaseInputControl<T> & ControlExtension<T>
+
+/**
+ * Control of an array node inside a form, with the given type.
  *
- * Exposes array specific methods, such as adding, removing or moving items around in the array.
+ * Exposes array-specific methods, such as adding, removing or moving items
+ * around in the array. Inherits any ControlExtension augmentations.
  */
 export type ArrayInputControl<T extends Array<unknown>> = InputControl<T> & {
   add: (defaultValue?: PartialOrPrimitive<T[number]>) => void
   remove: (index: number) => void
   moveItem: (fromIndex: number, toIndex: number) => void
 }
+
+/**
+ * Factory used by framework adapters to build their ControlExtension for each
+ * control. Receives the base control and a pre-wired field binding.
+ */
+export type CreateControlExtension = <T>(
+  control: BaseInputControl<T>,
+  binding: FieldBinding<T>
+) => ControlExtension<T>

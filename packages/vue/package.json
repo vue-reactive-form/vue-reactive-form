@@ -13,6 +13,7 @@
     "dist"
   ],
   "scripts": {
+    "test": "vitest",
     "dev": "tsc --watch",
     "build": "tsc"
   },
@@ -23,7 +24,9 @@
   },
   "devDependencies": {
     "@vue/reactivity": "^3.5.24",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4",
+    "yup": "^1.7.0"
   },
   "peerDependencies": {
     "@vue/reactivity": "^3.4.0"

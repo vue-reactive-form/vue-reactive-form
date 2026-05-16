@@ -5,16 +5,23 @@ import type {
 } from "./types/useForm"
 import type { PartialOrPrimitive } from "./types/utils"
 import type { ReactivityAdapter } from "./types/adapter"
+import type { CreateControlExtension } from "./types/controls"
 import { createControlsTree } from "./controlsTree"
 import { useFormContext } from "./useFormContext"
 
 export const createUseForm =
-  (adapter: ReactivityAdapter) =>
+  (
+    adapter: ReactivityAdapter,
+    createControlExtension?: CreateControlExtension
+  ) =>
   <TState, TValidatedState = TState>(
     defaultState?: PartialOrPrimitive<TState>,
     options: UseFormContextOptions<TState, TValidatedState> = {}
   ): FormRoot<TState, TValidatedState> => {
-    const formContext = useFormContext(adapter, defaultState, options)
+    const formContext = useFormContext(adapter, defaultState, {
+      ...options,
+      ...(createControlExtension && { createControlExtension })
+    })
     const { validate, meta, setAllFieldsAsTouched, onSubmitStart, onSubmitEnd } =
       formContext
 

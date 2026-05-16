@@ -25,7 +25,11 @@ export const useFormContext = <TState, TValidatedState = TState>(
   defaultState?: PartialOrPrimitive<TState>,
   options: UseFormContextOptions<TState, TValidatedState> = {}
 ): FormContext<PartialOrPrimitive<TState>, TValidatedState> => {
-  const { validationSchema, validateOn = "submit" } = options
+  const {
+    validationSchema,
+    validateOn = "submit",
+    createControlExtension
+  } = options
 
   const defaultFormState = adapter.cell(
     cloneDeep(defaultState) as PartialOrPrimitive<TState | undefined>
@@ -215,6 +219,7 @@ export const useFormContext = <TState, TValidatedState = TState>(
     isFieldTouched,
     validate,
     validateField,
-    validateOn
+    validateOn,
+    ...(createControlExtension && { createControlExtension })
   }
 }

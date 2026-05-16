@@ -1,6 +1,6 @@
 import type { StandardSchemaV1 } from "@standard-schema/spec"
 import type { FormNode } from "./formNodes"
-import type { InputControl } from "./controls"
+import type { CreateControlExtension, InputControl } from "./controls"
 import type { ValidationIssue } from "../validation"
 import type { MaybeGetter } from "./adapter"
 import type { RequiredOrPrimitive } from "./utils"
@@ -39,6 +39,8 @@ export type FormContext<TState, TValidatedState = TState> = {
   validate: () => Promise<TValidatedState | undefined>
   validateField: (path: PropertyPath) => Promise<void>
   validateOn: ValidateOn
+  /** Optional framework-specific factory that adds properties to each control. */
+  createControlExtension?: CreateControlExtension
 }
 
 export type ValidateOn = "submit" | "blur"
@@ -48,6 +50,8 @@ export type UseFormContextOptions<TState, TValidatedState = TState> = {
     StandardSchemaV1<TState, TValidatedState> | undefined
   >
   validateOn?: ValidateOn
+  /** Optional framework-specific factory that adds properties to each control. */
+  createControlExtension?: CreateControlExtension
 }
 
 export type UseFormOptions<

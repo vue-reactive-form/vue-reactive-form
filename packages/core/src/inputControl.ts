@@ -1,6 +1,10 @@
 import { cloneDeep, type PropertyPath } from "lodash-es"
 import { isDirty } from "./utils"
-import type { InputControl } from "./types/controls"
+import type {
+  BaseInputControl,
+  FieldBinding,
+  InputControl
+} from "./types/controls"
 import type { FormContext } from "./types/useForm"
 import type { PartialOrPrimitive } from "./types/utils"
 
@@ -15,10 +19,11 @@ export const createInputControl = <TState>(
     isFieldTouched,
     setFieldAsTouched,
     validateField,
-    validateOn
+    validateOn,
+    createControlExtension
   } = context
 
-  const control: InputControl<TState> = {
+  const baseControl: BaseInputControl<TState> = {
     get state() {
       return getFieldState(path, "current")
     },
@@ -29,7 +34,7 @@ export const createInputControl = <TState>(
       return getFieldState(path, "default")
     },
     get dirty() {
-      return isDirty(control.state, control.defaultState)
+      return isDirty(baseControl.state, baseControl.defaultState)
     },
     get touched() {
       return isFieldTouched(path)
@@ -38,13 +43,13 @@ export const createInputControl = <TState>(
       return getFieldErrors(path).map((issue) => issue.message)
     },
     get isValid() {
-      return control.errorMessages.length === 0
+      return baseControl.errorMessages.length === 0
     },
     clear() {
-      control.state = undefined
+      baseControl.state = undefined
     },
     reset() {
-      control.state = cloneDeep(control.defaultState)
+      baseControl.state = cloneDeep(baseControl.defaultState)
     },
     updateDefaultState(newDefaultState?: PartialOrPrimitive<TState>) {
       setFieldState(path, newDefaultState, "default")
@@ -54,24 +59,35 @@ export const createInputControl = <TState>(
     },
     validate() {
       return validateField(path)
+    }
+  }
+
+  // Pre-wired binding handed to the extension factory.
+  // `value` is a getter so adapters that read it inside their own getters stay reactive.
+  const binding: FieldBinding<TState> = {
+    get value() {
+      return baseControl.state
     },
-    get field() {
-      return {
-        modelValue: control.state,
-        "onUpdate:modelValue": (
-          value: PartialOrPrimitive<TState> | undefined
-        ) => {
-          control.state = value
-        },
-        onFocus: () => control.setAsTouched(),
-        onBlur: () => {
-          if (validateOn === "blur") {
-            return validateField(path)
-          }
-        }
+    onChange: (value) => {
+      baseControl.state = value
+    },
+    onFocus: () => baseControl.setAsTouched(),
+    onBlur: () => {
+      if (validateOn === "blur") {
+        return validateField(path)
       }
     }
   }
 
-  return control
+  if (createControlExtension) {
+    const extension = createControlExtension(baseControl, binding)
+    // defineProperties preserves any getters/setters defined on the extension,
+    // which a plain spread or Object.assign would invoke and snapshot.
+    Object.defineProperties(
+      baseControl,
+      Object.getOwnPropertyDescriptors(extension)
+    )
+  }
+
+  return baseControl as InputControl<TState>
 }

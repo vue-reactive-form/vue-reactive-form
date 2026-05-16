@@ -7,6 +7,7 @@ import type {
   PartialOrPrimitive
 } from "@nano-form/core"
 import { vueAdapter } from "./adapter"
+import { createVueExtension, type VueFieldProps } from "./field"
 
 export type {
   FormRoot,
@@ -17,13 +18,24 @@ export type {
   HandleFormSubmit,
   ValidateOn,
   ArrayInputControl,
-  FieldProps,
+  FieldBinding,
   InputControl,
   FormNode,
   ArrayFormNode,
   MaybeGetter,
   ValidationIssue
 } from "@nano-form/core"
+
+export type { VueFieldProps } from "./field"
+export { toVueField, createVueExtension } from "./field"
+
+// Declaration merging: every control produced through @nano-form/vue exposes
+// a typed `field` ready to v-bind on inputs.
+declare module "@nano-form/core" {
+  interface ControlExtension<T> {
+    field: VueFieldProps<T>
+  }
+}
 
 export type UseFormOptions<TState, TValidatedState = TState> = Omit<
   UseFormContextOptions<TState, TValidatedState>,
@@ -34,7 +46,7 @@ export type UseFormOptions<TState, TValidatedState = TState> = Omit<
   >
 }
 
-const _useForm = createUseForm(vueAdapter)
+const _useForm = createUseForm(vueAdapter, createVueExtension)
 
 export const useForm = <TState, TValidatedState = TState>(
   defaultState?: PartialOrPrimitive<TState>,
