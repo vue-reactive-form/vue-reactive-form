@@ -8,7 +8,7 @@ import type {
   UseFormContextOptions
 } from "./types/useForm"
 import type { PartialOrPrimitive } from "./types/utils"
-import { cloneDeep, get, set, type PropertyPath } from "lodash-es"
+import { cloneDeep, get, type PropertyPath } from "lodash-es"
 import {
   buildErrorsObject,
   standardValidate,
@@ -52,11 +52,7 @@ export const useFormContext = <TState, TValidatedState = TState>(
     const toBeUpdated = stateType === "default" ? defaultFormState : state
 
     if (Array.isArray(path) && path.length) {
-      adapter.update(toBeUpdated, (prev) => {
-        const next = cloneDeep(prev)
-        set(next as object, path, value)
-        return next
-      })
+      adapter.setIn(toBeUpdated, path, value)
     } else {
       adapter.update(toBeUpdated, value)
     }

@@ -21,6 +21,6 @@ export type {
 export type { FormNode, ArrayFormNode } from "./types/formNodes"
 export type { PartialOrPrimitive, RequiredOrPrimitive } from "./types/utils"
 export type { MaybeGetter, ReactivityAdapter, Cell, Updater } from "./types/adapter"
-export { resolveGetter, resolveUpdater } from "./types/adapter"
+export { resolveGetter, resolveUpdater, createImmutableSetIn } from "./types/adapter"
 export type { ValidationIssue } from "./validation"
 export { createUseForm } from "./useForm"
