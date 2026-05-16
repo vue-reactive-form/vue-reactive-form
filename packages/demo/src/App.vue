@@ -25,7 +25,7 @@ const onSubmit = handleSubmit({
 
 <template>
   <div class="container">
-    <h1 class="title">vue-reactive-form demo</h1>
+    <h1 class="title">@nano-form/vue demo</h1>
 
     <div class="layout">
       <div class="card form-card">
